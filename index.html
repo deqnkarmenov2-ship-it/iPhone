@@ -124,7 +124,6 @@
         input:focus {
             border-color: #158062;
         }
-        /* Запазваме стила за премахване на стрелките, въпреки че input type вече е text */
         input::-webkit-outer-spin-button,
         input::-webkit-inner-spin-button {
             -webkit-appearance: none;
@@ -261,7 +260,8 @@
         }
     </style>
 </head>
-<body onload="checkAndAutoReset(); loadCashLimits(); checkProStatus(); setupDecimalInputs();"> <div class="app-container">
+<body onload="checkAndAutoReset(); checkProStatus();">
+    <div class="app-container">
         
         <div class="content" id="lockedContent">
             
@@ -277,10 +277,10 @@
                 </div>
             </div>
             
-            <input type="text" id="billEur" placeholder="Сметка в евро" inputmode="decimal">
+            <input type="number" id="billEur" placeholder="Сметка в евро" step="0.01" inputmode="decimal">
 
-            <input type="text" id="paidEur" placeholder="Платено в евро" inputmode="decimal">
-            <input type="text" id="paidBgn" placeholder="Платено в лв" inputmode="decimal">
+            <input type="number" id="paidEur" placeholder="Платено в евро" step="0.01" inputmode="decimal">
+            <input type="number" id="paidBgn" placeholder="Платено в лв" step="0.01" inputmode="decimal">
 
             <button class="btn-calc" onclick="calculateResto()">ИЗЧИСЛИ РЕСТО</button>
 
@@ -295,7 +295,7 @@
                 <h3>Наличност в евро (за оптимизация)</h3>
                 
                 <label for="cashEur">Наличност в евро (€):</label>
-                <input type="text" id="cashEur" placeholder="Въведи 0, ако нямаш евро" inputmode="decimal" oninput="saveCashLimit()">
+                <input type="number" id="cashEur" placeholder="Въведи 0, ако нямаш евро" step="0.01" inputmode="decimal">
             </div>
             
             <button class="btn-calc-pink" onclick="calculateResto()">ИЗЧИСЛИ РЕСТО</button>
@@ -308,8 +308,8 @@
                 
                 <h3 style="font-size: 20px; font-weight: bold; color: #158062; margin-bottom: 15px; margin-top: 0;">BG РЕСТО калкулатор</h3>
 
-                <a href="https://bgresto.gumroad.com/l/zrxcf?wanted=true" class="btn-unlock-buy" target="_blank" style="margin-top: 0; margin-bottom: 25px; background-color: #158062 !important;">
-                    КУПИ ЗА 5.99 USD
+                <a href="https://payhip.com/b/73dOg" class="btn-unlock-buy" target="_blank" style="margin-top: 0; margin-bottom: 25px; background-color: #158062 !important;">
+                    КУПИ ЗА 4.99 €
                 </a>
                 
                 <p style="font-size: 16px; margin: 0 0 25px 0; line-height: 1.4; color: black; font-weight: 500;">
@@ -329,9 +329,8 @@
     <script>
         // ==============================================================================
         // КОНСТАНТИ - ВАШИЯТ APPS SCRIPT URL Е ВГРАДЕН ТОЧНО ТУК
-        // *** АКТУАЛИЗИРАН С НОВИЯ CLOUDFLARE WORKER ПРОКСИ АДРЕС ***
         // ==============================================================================
-        const API_ENDPOINT = "https://api.bgresto.online/api/unlock"; 
+        const API_ENDPOINT = "https://script.google.com/macros/s/AKfycbzQ9uI-jrEIDj1Vs57dDWxA6sqq5KFBMd1Hs3SAh5-2UqcpmcgwTfXFl4zmOnfyA3kw/exec"; 
         
         const EURO_RATE = 1.95583;
         
@@ -367,7 +366,7 @@
                 deferredPrompt = e;
                 // Покажи промпта веднага, ако вече е отключено
                 if (localStorage.getItem(LS_UNLOCKED_STATUS) === 'true') {
-                    showPermanentInstallPrompt();
+                     showPermanentInstallPrompt();
                 }
             });
             
@@ -465,7 +464,7 @@
                 document.getElementById('cashWarning').innerText = '';
                 document.querySelector('.results').style.color = "black";
                 document.getElementById('cashEur').value = '';
-                localStorage.removeItem('resto_cashEur');
+                // localStorage.removeItem('resto_cashEur'); // ПРЕМАХНАТО
                 localStorage.removeItem(LS_UUID);
                 deleteUUIDCookie(); 
                 localStorage.setItem('resto_lastResetTime', currentTime);
@@ -485,7 +484,7 @@
             const uuid = getOrCreateUUID();
             console.log("Current Device UUID:", uuid);
         
-            
+        
             if (isUnlocked) {
                 fullLockOverlay.style.display = 'none';
                 lockedContent.style.opacity = '1';
@@ -550,7 +549,7 @@
                         errorMessage = `${data.message} \n\n Ако кодът Ви е работил преди, той е временно блокиран, но Вашето устройство остава активирано. Пробвайте отново, когато изтече таймерът.`;
                     } else {
                         // Подобрено съобщение за легитимни потребители (Gumroad забавяне)
-                          errorMessage = `${errorMessage}. Ако току-що сте направили покупка, моля, изчакайте **30-40 секунди** и опитайте отново.`;
+                         errorMessage = `${errorMessage}. Ако току-що сте направили покупка, моля, изчакайте **30-40 секунди** и опитайте отново.`;
                     }
                     
                     alert(`Грешка: ${errorMessage}`);
@@ -571,9 +570,9 @@
         // ==============================================================================
         // ЛОГИКА ЗА RESTO
         // ==============================================================================
+        /*
+        // ПРЕМАХНАТИ ФУНКЦИИ: saveCashLimit() и loadCashLimits() за да не се запазва стойността на cashEur
         function saveCashLimit() {
-            // NOTE: Тъй като input event listener-ът в setupDecimalInputs() вече е почистил стойността
-            // и е заменил запетаите с точки, тук просто запазваме вече чистата стойност.
             const isUnlocked = localStorage.getItem(LS_UNLOCKED_STATUS) === 'true';
             if (isUnlocked) {
                 localStorage.setItem('resto_cashEur', document.getElementById('cashEur').value);
@@ -588,6 +587,7 @@
                 document.getElementById('cashEur').value = '';
             }
         }
+        */
         
         function calculateResto() {
             const isProActive = localStorage.getItem(LS_UNLOCKED_STATUS) === 'true';
@@ -597,7 +597,6 @@
                 return; 
             }
             
-            // Всички стойности вече са форматирани като точки от setupDecimalInputs()
             let billEurInput = parseFloat(document.getElementById('billEur').value) || 0;
             let paidEur = parseFloat(document.getElementById('paidEur').value) || 0;
             let paidBgn = parseFloat(document.getElementById('paidBgn').value) || 0;
@@ -620,9 +619,9 @@
                 return;
             }
             if (rawChangeLeva < 0.009) {
-                document.getElementById('resEur').innerText = "0.00";
-                document.getElementById('resBgn').innerText = "0.00";
-                return;
+                 document.getElementById('resEur').innerText = "0.00";
+                 document.getElementById('resBgn').innerText = "0.00";
+                 return;
             }
         
             let totalChangeLeva = roundMoney(rawChangeLeva); 
@@ -672,29 +671,9 @@
             document.querySelector('.results').style.color = "black";
             
             document.getElementById('cashEur').value = '';
-            localStorage.removeItem('resto_cashEur');
+            // localStorage.removeItem('resto_cashEur'); // ПРЕМАХНАТО
             
             localStorage.setItem('resto_lastResetTime', new Date().getTime());
-        }
-
-        // ==============================================================================
-        // НОВАТА ФУНКЦИЯ ЗА ОБРАБОТКА НА ДЕСЕТИЧНИ ЗНАЦИ
-        // ==============================================================================
-        function setupDecimalInputs() {
-            // IDs на всички входни полета, които трябва да поддържат точка и запетая
-            const ids = ['billEur', 'paidEur', 'paidBgn', 'cashEur'];
-            ids.forEach(id => {
-                const input = document.getElementById(id);
-                if (input) {
-                    // Добавяме event listener, който замества запетаите с точки веднага след въвеждане.
-                    // Това решава проблема със запетаята на iOS, когато input type е 'text'.
-                    input.addEventListener('input', function() {
-                        // 1. Позволява въвеждане само на цифри, точка и запетая (за чистота).
-                        // 2. Замества всички запетаи (,) с точки (.).
-                        this.value = this.value.replace(/[^0-9.,]/g, '').replace(/,/g, '.');
-                    });
-                }
-            });
         }
     </script>
 </body>
