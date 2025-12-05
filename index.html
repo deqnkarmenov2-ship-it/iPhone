@@ -261,8 +261,7 @@
         }
     </style>
 </head>
-<body onload="checkAndAutoReset(); checkProStatus(); setupDecimalInputs();"> 
-    <div class="app-container">
+<body onload="checkAndAutoReset(); loadCashLimits(); checkProStatus(); setupDecimalInputs();"> <div class="app-container">
         
         <div class="content" id="lockedContent">
             
@@ -296,7 +295,7 @@
                 <h3>Наличност в евро (за оптимизация)</h3>
                 
                 <label for="cashEur">Наличност в евро (€):</label>
-                <input type="text" id="cashEur" placeholder="Въведи 0, ако нямаш евро" inputmode="decimal">
+                <input type="text" id="cashEur" placeholder="Въведи 0, ако нямаш евро" inputmode="decimal" oninput="saveCashLimit()">
             </div>
             
             <button class="btn-calc-pink" onclick="calculateResto()">ИЗЧИСЛИ РЕСТО</button>
@@ -466,6 +465,7 @@
                 document.getElementById('cashWarning').innerText = '';
                 document.querySelector('.results').style.color = "black";
                 document.getElementById('cashEur').value = '';
+                localStorage.removeItem('resto_cashEur');
                 localStorage.removeItem(LS_UUID);
                 deleteUUIDCookie(); 
                 localStorage.setItem('resto_lastResetTime', currentTime);
@@ -571,6 +571,47 @@
         // ==============================================================================
         // ЛОГИКА ЗА RESTO
         // ==============================================================================
+        function saveCashLimit() {
+            // NOTE: Тъй като input event listener-ът в setupDecimalInputs() вече е почистил стойността
+            // и е заменил запетаите с точки, тук просто запазваме вече чистата стойност.
+            const isUnlocked = localStorage.getItem(LS_UNLOCKED_STATUS) === 'true';
+            if (isUnlocked) {
+                localStorage.setItem('resto_cashEur', document.getElementById('cashEur').value);
+            }
+        }
+        
+        function loadCashLimits() {
+            const isProActive = localStorage.getItem(LS_UNLOCKED_STATUS) === 'true';
+            const savedCashEur = localStorage.getItem('resto_cashEur');
+
+            if (savedCashEur !== null) {
+                let finalCashEurValue = savedCashEur;
+                
+                // *** НОВА ЛОГИКА ЗА АВТОМАТИЧНО НАМАЛЯВАНЕ С 22 ПРИ ЗАРЕЖДАНЕ (САМО ЗА PRO) ***
+                if (isProActive) {
+                    let currentCashEur = parseFloat(savedCashEur);
+                    
+                    // Декрементираме с 22
+                    let newCashEur = currentCashEur - 22;
+                    
+                    // Гарантираме, че наличността няма да падне под нула
+                    if (newCashEur < 0) {
+                        newCashEur = 0;
+                    }
+
+                    finalCashEurValue = newCashEur.toFixed(2);
+                    
+                    // Записваме новата намалена стойност обратно в LocalStorage
+                    localStorage.setItem('resto_cashEur', finalCashEurValue);
+                    console.log(`Наличността в евро е автоматично намалена с 22. Нова стойност: ${finalCashEurValue}`);
+                }
+                // *** КРАЙ НА НОВАТА ЛОГИКА ***
+
+                document.getElementById('cashEur').value = finalCashEurValue;
+            } else {
+                document.getElementById('cashEur').value = '';
+            }
+        }
         
         function calculateResto() {
             const isProActive = localStorage.getItem(LS_UNLOCKED_STATUS) === 'true';
@@ -655,6 +696,7 @@
             document.querySelector('.results').style.color = "black";
             
             document.getElementById('cashEur').value = '';
+            localStorage.removeItem('resto_cashEur');
             
             localStorage.setItem('resto_lastResetTime', new Date().getTime());
         }
