@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BG РЕСТО</title>
+    
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    
+    <link rel="manifest" href="manifest.json"> 
+    <link rel="apple-touch-icon" sizes="192x192" href="icon-192.png">
+    <link rel="apple-touch-icon" sizes="512x512" href="icon-512.png">
+    
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#158062">
+    <meta name="application-name" content="BG РЕСТО">
+
+    <style>
+        /* ОСНОВНИ СТИЛОВЕ */
+        html, body {
+            height: 100%; 
+            margin: 0;
+            overflow: hidden; 
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f2f2f7;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .app-container {
+            background-color: white;
+            width: 100%;
+            max-width: 375px;
+            height: 100%; 
+            border-radius: 0; 
+            box-shadow: none; 
+            display: flex;
+            flex-direction: column;
+            position: relative; 
+        }
+        .content {
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex-grow: 1; 
+            overflow-y: auto; 
+            transition: opacity 0.3s;
+        }
+
+        /* СТИЛ ЗА ГЛАВНАТА ИНСТРУКЦИЯ */
+        .instruction {
+            font-size: 24px; 
+            font-weight: bold;
+            color: black; 
+            text-align: center;
+            margin-bottom: 25px; 
+            padding-top: 15px; 
+        }
+        
+        /* СТИЛОВЕ ЗА ЗАКЛЮЧВАНЕ */
+        .full-lock-overlay {
+            position: absolute;
+            top: 0; 
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(255, 255, 255, 0.98);
+            z-index: 990; 
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            text-align: center;
+        }
+        .full-lock-overlay .lock-content {
+            background-color: #f2f2f7;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        /* СТИЛОВЕ ЗА ВХОДНИ ПОЛЕТА */
+        .cash-section {
+            width: 100%;
+            border-top: 1px solid #e0e0e0;
+            margin-top: 15px; 
+            padding-top: 10px;
+            flex-shrink: 0;
+        }
+        .cash-section h3 {
+            margin: 10px 0;
+            font-size: 16px;
+            color: #158062;
+            text-align: center;
+        }
+        .cash-section label {
+            display: block; 
+            text-align: left; 
+            font-size: 14px; 
+            margin-bottom: 5px; 
+            color: #555;
+            padding-left: 5px;
+        }
+        input {
+            width: 100%;
+            padding: 15px;
+            margin-bottom: 10px; 
+            border: 1px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 16px;
+            box-sizing: border-box;
+            color: #333;
+            outline: none;
+            flex-shrink: 0;
+        }
+        input:focus {
+            border-color: #158062;
+        }
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        
+        /* СТИЛОВЕ ЗА БУТОНИ */
+        .btn-calc, .btn-calc-pink, .btn-reset { 
+            background-color: #158062; 
+            color: white;
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: bold;
+            text-transform: uppercase;
+            cursor: pointer;
+            margin-top: 10px;
+            margin-bottom: 15px; 
+            box-sizing: border-box; 
+            flex-shrink: 0;
+        }
+        .btn-calc:active, .btn-calc-pink:active {
+            background-color: #0f5f49;
+        }
+        .btn-unlock-buy {
+            background-color: #d93025 !important; 
+            color: white;
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: bold;
+            text-transform: uppercase;
+            cursor: pointer;
+            margin-top: 15px; 
+            margin-bottom: 0; 
+            display: block;
+            text-align: center;
+            text-decoration: none;
+            box-sizing: border-box; 
+        }
+        .lock-content .btn-calc {
+            margin-top: 10px; 
+            margin-bottom: 0; 
+        }
+        .btn-reset {
+            background-color: #d93025; /* Червен цвят */
+            color: white;
+            border: none;
+            width: 100%;
+            padding: 15px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: bold;
+            text-transform: uppercase;
+            cursor: pointer;
+            margin-top: 5px; 
+            margin-bottom: 20px; 
+            box-sizing: border-box;
+            flex-shrink: 0;
+        }
+
+        /* СТИЛОВЕ ЗА РЕЗУЛТАТИ */
+        .results {
+            text-align: center;
+            font-size: 20px;
+            font-weight: 500;
+            color: #000;
+            flex-shrink: 0;
+        }
+        .results p {
+            margin: 5px 0; 
+            font-size: 20px; 
+            font-weight: bold;
+        }
+        .results .total-bill {
+            font-size: 14px; 
+            margin-top: 10px; 
+            color: #555;
+            font-weight: normal;
+        }
+        .results .warning {
+            color: orange;
+            font-size: 16px;
+            font-weight: 600;
+            margin-top: 5px;
+        }
+
+        /* ----------------------------------------------------- */
+        /* СТИЛОВЕ ЗА ИНЛАЙН ИНСТАЛАЦИОНЕН БАНЕР (PWA Prompt) */
+        /* ----------------------------------------------------- */
+        .install-prompt-modal {
+            width: 100%;
+            background-color: #158062;
+            padding: 10px 15px;
+            margin-bottom: 20px;
+            border-radius: 12px;
+            box-sizing: border-box;
+            color: white;
+            text-align: center;
+            z-index: 10;
+        }
+        
+        .prompt-content p {
+            margin: 5px 0 10px 0;
+            font-size: 16px;
+            font-weight: bold;
+        }
+        
+        .prompt-content button {
+            width: 48%; 
+            margin: 5px 1% 0;
+            display: inline-block;
+            box-sizing: border-box;
+            padding: 8px;
+            font-size: 14px;
+        }
+        
+        /* Специфични цветове за бутоните в банера: */
+        #installPrompt #installButton {
+            background-color: white; 
+            color: #158062;
+        }
+        
+        /* *** КОРЕКЦИЯ: Бутонът "Отказ" да е червен като .btn-reset *** */
+        #installPrompt #dismissButton {
+            background-color: #d93025; /* Червен фон */
+            color: white;
+            border: none;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body onload="checkAndAutoReset(); loadCashLimits(); checkProStatus();">
+    <div class="app-container">
+        
+        <div class="content" id="lockedContent">
+            
+            <div class="instruction">
+                Въведи сметката и сумата,<br> с която е платено
+            </div>
+            
+            <div id="installPrompt" class="install-prompt-modal" style="display: none;">
+                <div class="prompt-content">
+                    <p>Инсталирай приложението на телефона си за бърз достъп!</p>
+                    <button id="installButton" class="btn-calc">Инсталирай</button>
+                    <button id="dismissButton" class="btn-reset">ОТКАЗ</button>
+                </div>
+            </div>
+            
+            <input type="number" id="billEur" placeholder="Сметка в евро" step="0.01" inputmode="decimal">
+
+            <input type="number" id="paidEur" placeholder="Платено в евро" step="0.01" inputmode="decimal">
+            <input type="number" id="paidBgn" placeholder="Платено в лв" step="0.01" inputmode="decimal">
+
+            <button class="btn-calc" onclick="calculateResto()">ИЗЧИСЛИ РЕСТО</button>
+
+            <div class="results">
+                <p>Връщаш €: <span id="resEur">0.00</span></p>
+                <p>Връщаш лв: <span id="resBgn">0.00</span></p>
+                <p class="total-bill">Обща сметка: <span id="totalBillDisplay">0.00</span> лв</p>
+                <p class="warning" id="cashWarning"></p>
+            </div>
+            
+            <div class="cash-section">
+                <h3>Наличност в евро (за оптимизация)</h3>
+                
+                <label for="cashEur">Наличност в евро (€):</label>
+                <input type="number" id="cashEur" placeholder="Въведи 0, ако нямаш евро" step="0.01" inputmode="decimal" oninput="saveCashLimit()">
+            </div>
+            
+            <button class="btn-calc-pink" onclick="calculateResto()">ИЗЧИСЛИ РЕСТО</button>
+
+            <button class="btn-reset" onclick="resetFields()">НУЛИРАНЕ</button>
+        </div>
+        
+        <div class="full-lock-overlay" id="fullLockOverlay" style="display:none;">
+            <div class="lock-content">
+                
+                <h3 style="font-size: 20px; font-weight: bold; color: #158062; margin-bottom: 15px; margin-top: 0;">BG РЕСТО калкулатор</h3>
+
+                <a href="https://bgresto.gumroad.com/l/zrxcf?wanted=true" class="btn-unlock-buy" target="_blank" style="margin-top: 0; margin-bottom: 25px; background-color: #158062 !important;">
+                    КУПИ ЗА 5.99 USD
+                </a>
+                
+                <p style="font-size: 16px; margin: 0 0 25px 0; line-height: 1.4; color: black; font-weight: 500;">
+                    Моля, въведете вашия **EMAIL** и **УНИКАЛЕН КОД**, получен след покупка.
+                </p>
+                
+                <input type="email" id="userEmail" placeholder="ВЪВЕДЕТЕ EMAIL" style="margin-bottom: 10px;"/> 
+                
+                <input type="text" id="unlockKey" placeholder="ВЪВЕДЕТЕ ВАШИЯ КОД ТУК" style="margin-bottom: 15px;"/> 
+                
+                <button class="btn-calc btn-unlock-buy" onclick="unlockFeature()" style="margin-top: 10px; margin-bottom: 0;">АКТИВИРАЙ</button> 
+
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const _0x867def=_0x9b81;(function(_0x2266ac,_0x462bb6){const _0x5f0d20=_0x9b81,_0x105ff1=_0x2266ac();while(!![]){try{const _0x4b11f=parseInt(_0x5f0d20(0xd1))/0x1*(-parseInt(_0x5f0d20(0x123))/0x2)+-parseInt(_0x5f0d20(0xda))/0x3*(-parseInt(_0x5f0d20(0x176))/0x4)+parseInt(_0x5f0d20(0x174))/0x5*(-parseInt(_0x5f0d20(0x108))/0x6)+-parseInt(_0x5f0d20(0x114))/0x7+-parseInt(_0x5f0d20(0xfe))/0x8+parseInt(_0x5f0d20(0x166))/0x9*(-parseInt(_0x5f0d20(0x113))/0xa)+parseInt(_0x5f0d20(0xf8))/0xb*(parseInt(_0x5f0d20(0x181))/0xc);if(_0x4b11f===_0x462bb6)break;else _0x105ff1['push'](_0x105ff1['shift']());}catch(_0x5538b2){_0x105ff1['push'](_0x105ff1['shift']());}}}(_0x2f16,0x8003f));const API_ENDPOINT='https://api.bgresto.online/api/unlock',EURO_RATE=1.95583,LS_UNLOCKED_STATUS=_0x867def(0x16b),LS_UUID='device_uuid',COOKIE_UUID=_0x867def(0x168),LS_INSTALL_DISMISSED=_0x867def(0x177);let deferredPrompt;const installPrompt=document['getElementById'](_0x867def(0x13b)),installButton=document[_0x867def(0xff)]('installButton'),dismissButton=document[_0x867def(0xff)](_0x867def(0x117));_0x867def(0xfb)in navigator&&(window[_0x867def(0xd9)](_0x867def(0x104),function(){const _0x3de3be=_0x867def,_0x215375={'JcPTt':_0x3de3be(0x17d),'VZZkZ':_0x3de3be(0xe3)};navigator['serviceWorker'][_0x3de3be(0xe4)](_0x3de3be(0x16d))[_0x3de3be(0xe6)](_0x5b53ef=>{const _0x1142a8=_0x3de3be;console[_0x1142a8(0xfc)](_0x215375[_0x1142a8(0xed)]);})[_0x3de3be(0x11d)](_0x79f17a=>{const _0x38195e=_0x3de3be;console[_0x38195e(0xfc)](_0x215375[_0x38195e(0x155)],_0x79f17a);});}),window[_0x867def(0xd9)](_0x867def(0x189),_0x36b9e0=>{const _0xad6a7e=_0x867def,_0x5362f6={'JRMAH':function(_0x3a8542,_0x3a572a){return _0x3a8542===_0x3a572a;},'tGACc':function(_0x8a5407){return _0x8a5407();}};_0x36b9e0[_0xad6a7e(0x156)](),deferredPrompt=_0x36b9e0,_0x5362f6[_0xad6a7e(0xd8)](localStorage['getItem'](LS_UNLOCKED_STATUS),'true')&&_0x5362f6['tGACc'](showPermanentInstallPrompt);}),window['addEventListener'](_0x867def(0xc6),()=>{const _0x480115=_0x867def,_0x56871c={'DXXZF':_0x480115(0x18a)};installPrompt[_0x480115(0xd2)][_0x480115(0x128)]=_0x56871c[_0x480115(0x15f)],deferredPrompt=null,localStorage[_0x480115(0x170)](LS_INSTALL_DISMISSED);}));installButton[_0x867def(0xd9)]('click',()=>{const _0x5eff85=_0x867def,_0x1985b3={'kJbkH':_0x5eff85(0x18a)};deferredPrompt&&(installPrompt[_0x5eff85(0xd2)]['display']=_0x1985b3[_0x5eff85(0x118)],deferredPrompt['prompt'](),deferredPrompt[_0x5eff85(0x132)][_0x5eff85(0xe6)](_0x6b9b42=>{deferredPrompt=null;}));}),dismissButton[_0x867def(0xd9)]('click',()=>{const _0x3e5bf2=_0x867def;installPrompt[_0x3e5bf2(0xd2)][_0x3e5bf2(0x128)]='none';});function setCookie(_0x2b51fd,_0x35c26e,_0x44325c){const _0x20ef28=_0x867def,_0x372f95={'cDpvQ':function(_0x135656,_0x87207f){return _0x135656+_0x87207f;},'CQrRu':function(_0x29f749,_0x3517a3){return _0x29f749*_0x3517a3;},'aGksY':function(_0xeffa1e,_0x7e5b92){return _0xeffa1e*_0x7e5b92;},'SzenJ':function(_0x8dbd86,_0x5b9a9a){return _0x8dbd86+_0x5b9a9a;},'pqSzK':_0x20ef28(0x157),'slQxZ':function(_0x16fbd7,_0xc8926e){return _0x16fbd7+_0xc8926e;},'qXKDC':function(_0x1e0499,_0x431645){return _0x1e0499||_0x431645;},'rJsLl':_0x20ef28(0x131)};let _0x5a0487='';if(_0x44325c){const _0x5efe75=new Date();_0x5efe75[_0x20ef28(0x134)](_0x372f95[_0x20ef28(0xc7)](_0x5efe75[_0x20ef28(0xdb)](),_0x372f95[_0x20ef28(0x15d)](_0x372f95[_0x20ef28(0x15d)](_0x372f95['CQrRu'](_0x372f95[_0x20ef28(0x12c)](_0x44325c,0x18),0x3c),0x3c),0x3e8))),_0x5a0487=_0x372f95[_0x20ef28(0x184)](_0x372f95[_0x20ef28(0x163)],_0x5efe75[_0x20ef28(0x129)]());}document[_0x20ef28(0x122)]=_0x372f95[_0x20ef28(0x139)](_0x372f95[_0x20ef28(0x139)](_0x372f95['slQxZ'](_0x2b51fd,'='),_0x372f95['qXKDC'](_0x35c26e,''))+_0x5a0487,_0x372f95[_0x20ef28(0x138)]);}function getCookie(_0x4c5685){const _0x1b2402=_0x867def,_0x416b55={'yutsr':function(_0x59e71c,_0x39aa42){return _0x59e71c+_0x39aa42;},'jKiQH':function(_0x55524b,_0x3ad781){return _0x55524b<_0x3ad781;},'NbBvV':function(_0x3875a5,_0x5072a8){return _0x3875a5===_0x5072a8;},'dvQfA':function(_0x3cdbd1,_0x56e37d){return _0x3cdbd1===_0x56e37d;}},_0x429102=_0x416b55[_0x1b2402(0x17c)](_0x4c5685,'='),_0x1bac6a=document[_0x1b2402(0x122)][_0x1b2402(0x150)](';');for(let _0x2ee6d4=0x0;_0x416b55['jKiQH'](_0x2ee6d4,_0x1bac6a[_0x1b2402(0x120)]);_0x2ee6d4++){let _0x1731f5=_0x1bac6a[_0x2ee6d4];while(_0x416b55[_0x1b2402(0xe2)](_0x1731f5[_0x1b2402(0xd4)](0x0),'\x20'))_0x1731f5=_0x1731f5['substring'](0x1,_0x1731f5[_0x1b2402(0x120)]);if(_0x416b55['dvQfA'](_0x1731f5['indexOf'](_0x429102),0x0))return _0x1731f5[_0x1b2402(0x18e)](_0x429102[_0x1b2402(0x120)],_0x1731f5[_0x1b2402(0x120)]);}return null;}function generateUUID(){const _0x256a74=_0x867def,_0x1272fe={'iTWsb':function(_0x1b0988,_0x1af584){return _0x1b0988===_0x1af584;},'bjkfD':function(_0x1752b7,_0x1bb94c){return _0x1752b7|_0x1bb94c;},'pliqn':_0x256a74(0xde)};return _0x1272fe['pliqn']['replace'](/[xy]/g,function(_0x54b1ca){const _0x2cf83c=_0x256a74,_0x542e91=Math[_0x2cf83c(0x10a)]()*0x10|0x0,_0x1c2d20=_0x1272fe[_0x2cf83c(0x173)](_0x54b1ca,'x')?_0x542e91:_0x1272fe[_0x2cf83c(0xe7)](_0x542e91&0x3,0x8);return _0x1c2d20[_0x2cf83c(0xf3)](0x10);});}function getOrCreateUUID(){const _0x1ab708=_0x867def,_0x15ed7d={'RAnqu':function(_0x38c8ea){return _0x38c8ea();},'ZunFj':function(_0x52f62d,_0x342364,_0x3f5ddf,_0xcfcf4e){return _0x52f62d(_0x342364,_0x3f5ddf,_0xcfcf4e);},'VLMwC':function(_0x919bd8,_0x2bb380){return _0x919bd8*_0x2bb380;}};let _0x3b42fd=localStorage[_0x1ab708(0xca)](LS_UUID);return!_0x3b42fd&&(_0x3b42fd=getCookie(COOKIE_UUID)),!_0x3b42fd&&(_0x3b42fd=_0x15ed7d['RAnqu'](generateUUID)),localStorage[_0x1ab708(0xcb)](LS_UUID,_0x3b42fd),_0x15ed7d[_0x1ab708(0xf0)](setCookie,COOKIE_UUID,_0x3b42fd,_0x15ed7d['VLMwC'](0x16d,0xa)),_0x3b42fd;}function _0x2f16(){const _0x2f4419=['esDgL','ilzcA','uijZv','unlockKey','display','toUTCString','nmJRZ','JRgul','aGksY','0.00','pointerEvents','ADCkD','ВНИМАНИЕ:\x20Недостатъчно\x20евро.\x20Връщаш\x20',';\x20path=/;\x20SameSite=Lax;\x20secure','userChoice','SKdhH','setTime','flex','wiMFe','nfAht','rJsLl','slQxZ','uDzxy','installPrompt','color','ZGnCN','orange','#d93025','querySelector','lLpFk','error','zfluI','AfYmh','\x20\x0a\x0a\x20Ако\x20кодът\x20Ви\x20е\x20работил\x20преди,\x20той\x20е\x20временно\x20блокиран,\x20но\x20Вашето\x20устройство\x20остава\x20активирано.\x20Пробвайте\x20отново,\x20когато\x20изтече\x20таймерът.','bIqTm','.lock-content\x20.btn-unlock-buy','Hqvup','OSMmt','toFixed','pHkpF','includes','RZHAq','ZUrys','ZsvWh','split','kjtfm','resto_lastResetTime','AHtam','LOOyl','VZZkZ','preventDefault',';\x20expires=','billEur','abs','Грешка:\x20','resto_cashEur','7|3|13|12|1|5|0|6|11|2|8|9|10|4','CQrRu','value','DXXZF','Bgchf','resEur','cashWarning','pqSzK','BSPXR','fullLockOverlay','1358568GEQRbu','uerJv','uuid_cookie','EdrwU','trim','isProUnlocked_AppsScript','LmeCA','service-worker.js','otBRQ','.results','removeItem','auto','Проверка\x20на\x20кода\x20и\x20имейла...\x20Моля,\x20изчакайте.','iTWsb','5PycHMT','matches','234488FKbfwn','pwa_dismissed_permanently','userEmail','paidEur','httpCode','OVsAx','yutsr','ServiceWorker\x20регистрацията\x20е\x20успешна!','NoEYh','&uuid=','Fmmxk','13473012YqKMIW','YHSdG','.\x20Ако\x20току-що\x20сте\x20направили\x20покупка,\x20моля,\x20изчакайте\x20**30-40\x20секунди**\x20и\x20опитайте\x20отново.','SzenJ','VYBLD','ZzjsJ','pyTkt','GNnZt','beforeinstallprompt','none','eltgs','ceZjK','disabled','substring','heYPp','mZcSt','qGCLb','Приложението\x20е\x20заключено.\x20Моля,\x20въведете\x20ключ\x20за\x20достъп.','QixJN','ygXwY','LjeuL','black','qzdVx','wZPUf','resBgn','LtOsn','appinstalled','cDpvQ','gqriK','wWMkt','getItem','setItem','lnPwM','eUMZT','message','totalBillDisplay','pzlLa','51827gNVJUF','style','iGYia','charAt','GCRRl','WKmqD','lQXjH','JRMAH','addEventListener','48cqUllE','getTime','jVqjN','LnlOG','xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx','true','BFNMb','Current\x20Device\x20UUID:','NbBvV','ServiceWorker\x20регистрацията\x20се\x20провали:','register','cashEur','then','bjkfD','qSjxS','wPqIJ','leBGV','placeholder','QtDYu','JcPTt','QJXoH','?key=','ZunFj','lKvmR','DdwkU','toString','Qigri','kBlwj','pBEro','VlqlW','11WhypwI','PYvmX','WoHPG','serviceWorker','log','Недостиг!','2498048VgavTn','getElementById','wREHy','quKTg','vemAd','paidBgn','load','API\x20Error:','\x20лв.)\x20в\x20лева.','\x20лв','521640eHIDQI','IdJPv','random','Моля,\x20въведете\x20Вашия\x20код.','toLowerCase','IFlCn','Pimgr','block','ВЪВЕДЕТЕ\x20ВАШИЯ\x20КОД\x20ТУК','json','innerText','30kEfxnj','3701733VuJYIq','uEZJH','LveYV','dismissButton','kJbkH','Автоматично\x20ПЪЛНО\x20НУЛИРАНЕ\x20след\x2010\x20часа.','yPhtO','lBSie','(display-mode:\x20standalone)','catch','fhuDu','YpCIo','length','429','cookie','6SdJdbX'];_0x2f16=function(){return _0x2f4419;};return _0x2f16();}function roundMoney(_0x308a51){const _0x2634d3=_0x867def,_0x543775={'wPqIJ':function(_0xb31aed,_0x2b0954){return _0xb31aed/_0x2b0954;},'Fmmxk':function(_0x113e71,_0x20e0cf){return _0x113e71+_0x20e0cf;}};return _0x543775[_0x2634d3(0xe9)](Math['round'](_0x543775[_0x2634d3(0x180)](_0x308a51,Number['EPSILON'])*0x64),0x64);}function deleteUUIDCookie(){const _0x3bde1c=_0x867def,_0x3a5877={'iGYia':'=;\x20expires=Thu,\x2001\x20Jan\x201970\x2000:00:00\x20UTC;\x20path=/;\x20SameSite=Lax;\x20secure'};document[_0x3bde1c(0x122)]=COOKIE_UUID+_0x3a5877[_0x3bde1c(0xd3)];}function checkAndAutoReset(){const _0x54c127=_0x867def,_0x360502={'qSjxS':function(_0x44c5c4,_0x19f40a){return _0x44c5c4*_0x19f40a;},'heYPp':_0x54c127(0x152),'LnlOG':function(_0x4e84c7,_0x21df38){return _0x4e84c7===_0x21df38;},'SwaGU':_0x54c127(0xdf),'Ogyxd':function(_0x206ba8,_0x1580db){return _0x206ba8>_0x1580db;},'ZzjsJ':function(_0x2ddb02,_0x2d73f8){return _0x2ddb02-_0x2d73f8;},'LveYV':_0x54c127(0x15c),'LjeuL':_0x54c127(0x162),'vtJTe':_0x54c127(0xc4),'eltgs':_0x54c127(0x12d),'ygXwY':_0x54c127(0x119),'nfAht':'billEur','LmeCA':function(_0x28d10b){return _0x28d10b();},'Hqvup':_0x54c127(0xe5),'wZPUf':'paidBgn'},_0x512935=_0x360502[_0x54c127(0xe8)](_0x360502['qSjxS'](_0x360502[_0x54c127(0xe8)](0xa,0x3c),0x3c),0x3e8),_0x3cdc67=parseInt(localStorage['getItem'](_0x360502[_0x54c127(0x18f)])||'0',0xa),_0x29c879=new Date()[_0x54c127(0xdb)](),_0x3e7b0d=_0x360502[_0x54c127(0xdd)](localStorage[_0x54c127(0xca)](LS_UNLOCKED_STATUS),_0x360502['SwaGU']);if(_0x3e7b0d&&_0x360502['Ogyxd'](_0x360502[_0x54c127(0x186)](_0x29c879,_0x3cdc67),_0x512935)){const _0x9aa2d1=_0x360502[_0x54c127(0x116)][_0x54c127(0x150)]('|');let _0x14c82a=0x0;while(!![]){switch(_0x9aa2d1[_0x14c82a++]){case'0':document[_0x54c127(0xff)](_0x360502[_0x54c127(0x195)])[_0x54c127(0x112)]='';continue;case'1':document[_0x54c127(0xff)](_0x360502['vtJTe'])[_0x54c127(0x112)]=_0x360502['eltgs'];continue;case'2':localStorage[_0x54c127(0x170)](_0x54c127(0x15b));continue;case'3':document[_0x54c127(0xff)](_0x54c127(0x179))['value']='';continue;case'4':console[_0x54c127(0xfc)](_0x360502[_0x54c127(0x194)]);continue;case'5':document['getElementById'](_0x54c127(0xcf))[_0x54c127(0x112)]=_0x360502[_0x54c127(0x18b)];continue;case'6':document[_0x54c127(0x140)]('.results')[_0x54c127(0xd2)][_0x54c127(0x13c)]=_0x54c127(0xc1);continue;case'7':document[_0x54c127(0xff)](_0x360502[_0x54c127(0x137)])[_0x54c127(0x15e)]='';continue;case'8':localStorage[_0x54c127(0x170)](LS_UUID);continue;case'9':_0x360502[_0x54c127(0x16c)](deleteUUIDCookie);continue;case'10':localStorage[_0x54c127(0xcb)](_0x360502[_0x54c127(0x18f)],_0x29c879);continue;case'11':document[_0x54c127(0xff)](_0x360502[_0x54c127(0x148)])[_0x54c127(0x15e)]='';continue;case'12':document[_0x54c127(0xff)](_0x54c127(0x161))[_0x54c127(0x112)]=_0x360502[_0x54c127(0x18b)];continue;case'13':document[_0x54c127(0xff)](_0x360502[_0x54c127(0xc3)])[_0x54c127(0x15e)]='';continue;}break;}}}function checkProStatus(){const _0x358c8e=_0x867def,_0x14ddf0={'quKTg':'lockedContent','VYBLD':function(_0x20c2b5){return _0x20c2b5();},'ZsvWh':_0x358c8e(0x18a),'kBlwj':_0x358c8e(0x171),'eUMZT':_0x358c8e(0x135)},_0x4f5abc=localStorage['getItem'](LS_UNLOCKED_STATUS)===_0x358c8e(0xdf),_0x1b9649=document[_0x358c8e(0xff)](_0x358c8e(0x165)),_0xf5ffc5=document[_0x358c8e(0xff)](_0x14ddf0[_0x358c8e(0x101)]),_0x9d71c5=_0x14ddf0[_0x358c8e(0x185)](getOrCreateUUID);console[_0x358c8e(0xfc)](_0x358c8e(0xe1),_0x9d71c5),_0x4f5abc?(_0x1b9649[_0x358c8e(0xd2)][_0x358c8e(0x128)]=_0x14ddf0[_0x358c8e(0x14f)],_0xf5ffc5[_0x358c8e(0xd2)]['opacity']='1',_0xf5ffc5[_0x358c8e(0xd2)][_0x358c8e(0x12e)]=_0x14ddf0[_0x358c8e(0xf5)],showPermanentInstallPrompt()):(_0x1b9649[_0x358c8e(0xd2)][_0x358c8e(0x128)]=_0x14ddf0[_0x358c8e(0xcd)],_0xf5ffc5[_0x358c8e(0xd2)]['opacity']='0',_0xf5ffc5['style']['pointerEvents']=_0x14ddf0[_0x358c8e(0x14f)]);}function showPermanentInstallPrompt(){const _0x21f591=_0x867def,_0xd6baf3={'gqriK':_0x21f591(0x11c),'uijZv':function(_0x13d167,_0x159fb4){return _0x13d167===_0x159fb4;},'GNnZt':function(_0x2a8270,_0x473cf4){return _0x2a8270&&_0x473cf4;},'ezaMl':_0x21f591(0x10f),'EsuIz':_0x21f591(0x18a)},_0x15ae49=window['matchMedia'](_0xd6baf3[_0x21f591(0xc8)])[_0x21f591(0x175)],_0x240ee9=_0xd6baf3[_0x21f591(0x126)](localStorage['getItem'](LS_INSTALL_DISMISSED),'true');_0xd6baf3[_0x21f591(0x188)](deferredPrompt,!_0x15ae49)&&!_0x240ee9?installPrompt[_0x21f591(0xd2)][_0x21f591(0x128)]=_0xd6baf3['ezaMl']:installPrompt['style'][_0x21f591(0x128)]=_0xd6baf3['EsuIz'];}async function unlockFeature(){const _0x66bfed=_0x867def,_0x245b2f={'wWMkt':_0x66bfed(0x127),'DdwkU':_0x66bfed(0x178),'nmJRZ':function(_0x442898){return _0x442898();},'WKmqD':function(_0x26a3c8,_0x33f9f9){return _0x26a3c8(_0x33f9f9);},'hVkaJ':_0x66bfed(0x10b),'ADCkD':_0x66bfed(0x172),'VlqlW':_0x66bfed(0x147),'SKdhH':function(_0x3e8f18,_0x3340d3){return _0x3e8f18(_0x3340d3);},'EdrwU':function(_0xf198d2,_0x2c7b69){return _0xf198d2(_0x2c7b69);},'zfluI':function(_0xc15170,_0x21c003){return _0xc15170(_0x21c003);},'LOOyl':function(_0x2de761,_0x4e33f2){return _0x2de761(_0x4e33f2);},'leBGV':function(_0x42c071,_0x5a31f3){return _0x42c071===_0x5a31f3;},'GCRRl':'success','uerJv':_0x66bfed(0x152),'ceZjK':function(_0x32b8b1,_0x13ef70){return _0x32b8b1(_0x13ef70);},'ZGnCN':function(_0x12fa8e){return _0x12fa8e();},'wrxRH':function(_0x529cd9,_0x4a3ffb){return _0x529cd9===_0x4a3ffb;},'qGCLb':_0x66bfed(0x121),'IdJPv':'Твърде\x20много\x20неуспешни\x20опити.\x20Устройството\x20е\x20блокирано\x20за\x2024\x20часа.\x20Моля,\x20опитайте\x20отново\x20утре.','kjtfm':'Кодът\x20е\x20блокиран','Xblnj':function(_0x46c424,_0x301ac9){return _0x46c424(_0x301ac9);},'uEZJH':'Грешка\x20при\x20свързване\x20със\x20сървъра.\x20Проверете\x20връзката\x20си.','BSPXR':_0x66bfed(0x105)},_0xcbe11c=document[_0x66bfed(0xff)](_0x245b2f['wWMkt'])['value'][_0x66bfed(0x16a)](),_0x1fb76b=document[_0x66bfed(0xff)](_0x245b2f[_0x66bfed(0xf2)])[_0x66bfed(0x15e)]['trim']()[_0x66bfed(0x10c)](),_0x4b9d1c=_0x245b2f[_0x66bfed(0x12a)](getOrCreateUUID);if(!_0xcbe11c){_0x245b2f[_0x66bfed(0xd6)](alert,_0x245b2f['hVkaJ']);return;}document['getElementById'](_0x66bfed(0x127))[_0x66bfed(0xeb)]=_0x245b2f[_0x66bfed(0x12f)],document[_0x66bfed(0x140)](_0x245b2f[_0x66bfed(0xf7)])[_0x66bfed(0x18d)]=!![];try{const _0xdb5d29=API_ENDPOINT+_0x66bfed(0xef)+_0x245b2f[_0x66bfed(0x133)](encodeURIComponent,_0xcbe11c)+'&email='+_0x245b2f[_0x66bfed(0x169)](encodeURIComponent,_0x1fb76b)+_0x66bfed(0x17f)+_0x245b2f[_0x66bfed(0x143)](encodeURIComponent,_0x4b9d1c),_0x1ebf81=await _0x245b2f[_0x66bfed(0x154)](fetch,_0xdb5d29),_0x54f126=await _0x1ebf81[_0x66bfed(0x111)]();if(_0x245b2f[_0x66bfed(0xea)](_0x54f126['status'],_0x245b2f[_0x66bfed(0xd5)]))localStorage[_0x66bfed(0xcb)](LS_UNLOCKED_STATUS,_0x66bfed(0xdf)),localStorage[_0x66bfed(0xcb)](_0x245b2f[_0x66bfed(0x167)],new Date()[_0x66bfed(0xdb)]()),_0x245b2f[_0x66bfed(0x18c)](alert,'Успех!\x20Приложението\x20е\x20отключено!\x20'+_0x54f126['message']),_0x245b2f[_0x66bfed(0x13d)](showPermanentInstallPrompt);else{let _0x336b2d=_0x54f126['message']||'Грешка\x20при\x20активирането.\x20Пробвайте\x20отново.';if(_0x245b2f['wrxRH'](_0x54f126[_0x66bfed(0x17a)],_0x245b2f[_0x66bfed(0x191)]))_0x336b2d=_0x245b2f[_0x66bfed(0x109)];else _0x54f126[_0x66bfed(0xce)][_0x66bfed(0x14c)](_0x245b2f[_0x66bfed(0x151)])?_0x336b2d=_0x54f126[_0x66bfed(0xce)]+_0x66bfed(0x145):_0x336b2d=_0x336b2d+_0x66bfed(0x183);_0x245b2f[_0x66bfed(0x154)](alert,_0x66bfed(0x15a)+_0x336b2d),localStorage[_0x66bfed(0x170)](LS_UNLOCKED_STATUS);}}catch(_0x29a96f){_0x245b2f['Xblnj'](alert,_0x245b2f[_0x66bfed(0x115)]),console[_0x66bfed(0x142)](_0x245b2f[_0x66bfed(0x164)],_0x29a96f);}document['getElementById'](_0x245b2f[_0x66bfed(0xc9)])[_0x66bfed(0x15e)]='',document[_0x66bfed(0xff)](_0x245b2f[_0x66bfed(0xf2)])[_0x66bfed(0x15e)]='',document[_0x66bfed(0xff)](_0x245b2f[_0x66bfed(0xc9)])[_0x66bfed(0xeb)]=_0x66bfed(0x110),document['querySelector'](_0x245b2f[_0x66bfed(0xf7)])[_0x66bfed(0x18d)]=![],_0x245b2f[_0x66bfed(0x13d)](checkProStatus);}function saveCashLimit(){const _0x3b77d1=_0x867def,_0x18e2be={'IKSFl':function(_0x1fb3a4,_0x369f61){return _0x1fb3a4===_0x369f61;},'IFlCn':_0x3b77d1(0xdf),'Bgchf':_0x3b77d1(0x15b),'Qigri':'cashEur'},_0x222aa5=_0x18e2be['IKSFl'](localStorage[_0x3b77d1(0xca)](LS_UNLOCKED_STATUS),_0x18e2be[_0x3b77d1(0x10d)]);_0x222aa5&&localStorage[_0x3b77d1(0xcb)](_0x18e2be[_0x3b77d1(0x160)],document[_0x3b77d1(0xff)](_0x18e2be[_0x3b77d1(0xf4)])['value']);}function loadCashLimits(){const _0x530156=_0x867def,_0x5e065d={'bIqTm':_0x530156(0x15b),'NoEYh':function(_0x5ef044,_0x421cfe){return _0x5ef044!==_0x421cfe;},'RZHAq':_0x530156(0xe5)},_0x4898e2=localStorage['getItem'](_0x5e065d[_0x530156(0x146)]);_0x5e065d[_0x530156(0x17e)](_0x4898e2,null)?document['getElementById'](_0x5e065d[_0x530156(0x14d)])[_0x530156(0x15e)]=_0x4898e2:document[_0x530156(0xff)](_0x530156(0xe5))['value']='';}function calculateResto(){const _0x3eb1ff=_0x867def,_0x1df392={'ZUrys':function(_0x1819ea,_0x127237){return _0x1819ea===_0x127237;},'YHSdG':'true','lLpFk':function(_0x1bef86,_0x195906){return _0x1bef86(_0x195906);},'fhuDu':'Приложението\x20е\x20заключено.\x20Моля,\x20въведете\x20ключ\x20за\x20достъп.','pBEro':_0x3eb1ff(0x179),'pzlLa':'cashEur','lnPwM':function(_0x1319cf,_0x1b19a5){return _0x1319cf===_0x1b19a5;},'qzdVx':function(_0x44d650,_0x2c55f6){return _0x44d650(_0x2c55f6);},'esDgL':function(_0xa5affb,_0x4dd770){return _0xa5affb*_0x4dd770;},'OihUc':function(_0x17fc55,_0x55c6f2){return _0x17fc55(_0x55c6f2);},'JRgul':'cashWarning','ilzcA':'black','vemAd':function(_0x13db0b,_0x3e13cd){return _0x13db0b<_0x3e13cd;},'LtOsn':_0x3eb1ff(0x161),'wiMFe':'resBgn','yPhtO':function(_0x2b6094,_0x1cbdee){return _0x2b6094(_0x1cbdee);},'OSMmt':_0x3eb1ff(0x107),'jVqjN':_0x3eb1ff(0x16f),'BFNMb':_0x3eb1ff(0x12d),'lQXjH':function(_0x2cd811,_0x2b2f02){return _0x2cd811(_0x2b2f02);},'mnGto':function(_0x200c4f,_0x7c19a4){return _0x200c4f/_0x7c19a4;},'OVsAx':function(_0x221f70,_0xe067fe){return _0x221f70<=_0xe067fe;},'lKvmR':function(_0x4190bd,_0x682c4f){return _0x4190bd-_0x682c4f;},'QixJN':function(_0x1c464a,_0x5bfa1f){return _0x1c464a!==_0x5bfa1f;},'QtDYu':_0x3eb1ff(0x13e)},_0x3d5115=_0x1df392[_0x3eb1ff(0x14e)](localStorage[_0x3eb1ff(0xca)](LS_UNLOCKED_STATUS),_0x1df392[_0x3eb1ff(0x182)]);if(!_0x3d5115){_0x1df392['lLpFk'](alert,_0x1df392[_0x3eb1ff(0x11e)]);return;}let _0x1cf415=_0x1df392[_0x3eb1ff(0x141)](parseFloat,document['getElementById'](_0x3eb1ff(0x158))['value'])||0x0,_0x25efba=parseFloat(document[_0x3eb1ff(0xff)](_0x1df392[_0x3eb1ff(0xf6)])['value'])||0x0,_0x749c9f=_0x1df392[_0x3eb1ff(0x141)](parseFloat,document[_0x3eb1ff(0xff)](_0x3eb1ff(0x103))['value'])||0x0,_0x1c47b5=document[_0x3eb1ff(0xff)](_0x1df392[_0x3eb1ff(0xd0)])[_0x3eb1ff(0x15e)],_0x473965=_0x1df392[_0x3eb1ff(0xcc)](_0x1c47b5,'')?Infinity:_0x1df392[_0x3eb1ff(0xc2)](parseFloat,_0x1c47b5),_0xd6032b=_0x1df392[_0x3eb1ff(0x124)](_0x1cf415,EURO_RATE),_0x4ed8f4=_0x1df392[_0x3eb1ff(0x124)](_0x25efba,EURO_RATE)+_0x749c9f,_0x28faf4=_0x4ed8f4-_0xd6032b;document[_0x3eb1ff(0xff)](_0x3eb1ff(0xcf))[_0x3eb1ff(0x112)]=_0x1df392['OihUc'](roundMoney,_0xd6032b)[_0x3eb1ff(0x14a)](0x2),document['getElementById'](_0x1df392[_0x3eb1ff(0x12b)])[_0x3eb1ff(0x112)]='',document['querySelector']('.results')[_0x3eb1ff(0xd2)][_0x3eb1ff(0x13c)]=_0x1df392[_0x3eb1ff(0x125)];if(_0x1df392[_0x3eb1ff(0x102)](_0x28faf4,-0.009)){document[_0x3eb1ff(0xff)](_0x1df392[_0x3eb1ff(0xc5)])[_0x3eb1ff(0x112)]=_0x3eb1ff(0xfd),document[_0x3eb1ff(0xff)](_0x1df392['wiMFe'])[_0x3eb1ff(0x112)]=_0x1df392[_0x3eb1ff(0x11a)](roundMoney,Math[_0x3eb1ff(0x159)](_0x28faf4))[_0x3eb1ff(0x14a)](0x2)+_0x1df392[_0x3eb1ff(0x149)],document['querySelector'](_0x1df392[_0x3eb1ff(0xdc)])[_0x3eb1ff(0xd2)]['color']=_0x3eb1ff(0x13f);return;}if(_0x28faf4<0.009){document[_0x3eb1ff(0xff)](_0x1df392[_0x3eb1ff(0xc5)])[_0x3eb1ff(0x112)]=_0x1df392[_0x3eb1ff(0xe0)],document['getElementById'](_0x1df392[_0x3eb1ff(0x136)])[_0x3eb1ff(0x112)]=_0x1df392['BFNMb'];return;}let _0x5e473b=_0x1df392[_0x3eb1ff(0xd7)](roundMoney,_0x28faf4),_0x584493=0x0,_0x2b349a=0x0,_0x1258d0=_0x1df392['lLpFk'](roundMoney,_0x1df392['mnGto'](_0x5e473b,EURO_RATE));if(_0x1df392[_0x3eb1ff(0x17b)](_0x1258d0,_0x473965))_0x584493=_0x1258d0,_0x2b349a=0x0;else{_0x584493=_0x473965;let _0x44e70d=_0x584493*EURO_RATE,_0x5d42fc=_0x1df392[_0x3eb1ff(0xf1)](_0x5e473b,_0x44e70d);_0x2b349a=roundMoney(_0x5d42fc),_0x1df392[_0x3eb1ff(0x193)](_0x473965,Infinity)&&(document[_0x3eb1ff(0xff)](_0x1df392[_0x3eb1ff(0x12b)])[_0x3eb1ff(0x112)]=_0x3eb1ff(0x130)+_0x584493[_0x3eb1ff(0x14a)](0x2)+'€\x20и\x20остатъка\x20('+_0x2b349a[_0x3eb1ff(0x14a)](0x2)+_0x3eb1ff(0x106),document[_0x3eb1ff(0x140)](_0x3eb1ff(0x16f))[_0x3eb1ff(0xd2)][_0x3eb1ff(0x13c)]=_0x1df392[_0x3eb1ff(0xec)]);}document['getElementById'](_0x1df392[_0x3eb1ff(0xc5)])[_0x3eb1ff(0x112)]=_0x584493[_0x3eb1ff(0x14a)](0x2),document[_0x3eb1ff(0xff)](_0x1df392['wiMFe'])[_0x3eb1ff(0x112)]=_0x2b349a[_0x3eb1ff(0x14a)](0x2);}function _0x9b81(_0x8b16eb,_0x20f38b){const _0x2f16ec=_0x2f16();return _0x9b81=function(_0x9b811c,_0x11fff4){_0x9b811c=_0x9b811c-0xc1;let _0x5bdbec=_0x2f16ec[_0x9b811c];return _0x5bdbec;},_0x9b81(_0x8b16eb,_0x20f38b);}function resetFields(){const _0x2299c3=_0x867def,_0x5b10b4={'uDzxy':function(_0x5a3ab4,_0x229c87){return _0x5a3ab4===_0x229c87;},'pyTkt':_0x2299c3(0xdf),'AfYmh':function(_0x3f666b,_0x191704){return _0x3f666b(_0x191704);},'PYvmX':_0x2299c3(0x192),'otBRQ':_0x2299c3(0x158),'AHtam':'paidEur','QJXoH':'resEur','mZcSt':_0x2299c3(0x12d),'WoHPG':_0x2299c3(0xc4),'YpCIo':'totalBillDisplay','pHkpF':_0x2299c3(0x162),'Pimgr':_0x2299c3(0x16f),'YPZkk':_0x2299c3(0xc1),'wREHy':_0x2299c3(0xe5),'lBSie':_0x2299c3(0x15b),'TXTES':_0x2299c3(0x152)},_0x47baea=_0x5b10b4[_0x2299c3(0x13a)](localStorage['getItem'](LS_UNLOCKED_STATUS),_0x5b10b4[_0x2299c3(0x187)]);if(!_0x47baea){_0x5b10b4[_0x2299c3(0x144)](alert,_0x5b10b4[_0x2299c3(0xf9)]);return;}document[_0x2299c3(0xff)](_0x5b10b4[_0x2299c3(0x16e)])['value']='',document[_0x2299c3(0xff)](_0x5b10b4[_0x2299c3(0x153)])[_0x2299c3(0x15e)]='',document[_0x2299c3(0xff)](_0x2299c3(0x103))[_0x2299c3(0x15e)]='',document['getElementById'](_0x5b10b4[_0x2299c3(0xee)])['innerText']=_0x5b10b4[_0x2299c3(0x190)],document[_0x2299c3(0xff)](_0x5b10b4[_0x2299c3(0xfa)])[_0x2299c3(0x112)]=_0x2299c3(0x12d),document[_0x2299c3(0xff)](_0x5b10b4[_0x2299c3(0x11f)])[_0x2299c3(0x112)]=_0x5b10b4[_0x2299c3(0x190)],document[_0x2299c3(0xff)](_0x5b10b4[_0x2299c3(0x14b)])[_0x2299c3(0x112)]='',document['querySelector'](_0x5b10b4[_0x2299c3(0x10e)])[_0x2299c3(0xd2)][_0x2299c3(0x13c)]=_0x5b10b4['YPZkk'],document['getElementById'](_0x5b10b4[_0x2299c3(0x100)])[_0x2299c3(0x15e)]='',localStorage[_0x2299c3(0x170)](_0x5b10b4[_0x2299c3(0x11b)]),localStorage[_0x2299c3(0xcb)](_0x5b10b4['TXTES'],new Date()[_0x2299c3(0xdb)]());}
+    </script>
+</body>
+</html>
