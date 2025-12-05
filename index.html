@@ -327,399 +327,371 @@
     </div>
     
     <script>
-        // ==============================================================================
-        // КОНСТАНТИ - ВАШИЯТ APPS SCRIPT URL Е ВГРАДЕН ТОЧНО ТУК
-        // *** АКТУАЛИЗИРАН С НОВИЯ CLOUDFLARE WORKER ПРОКСИ АДРЕС ***
-        // ==============================================================================
-        const API_ENDPOINT = "https://api.bgresto.online/api/unlock"; 
-        
-        const EURO_RATE = 1.95583;
-        
-        // Ключове за LocalStorage
-        const LS_UNLOCKED_STATUS = 'isProUnlocked_AppsScript';
-        const LS_UUID = 'device_uuid';
-        const COOKIE_UUID = 'uuid_cookie'; 
-        const LS_INSTALL_DISMISSED = 'pwa_dismissed_permanently'; 
-        
-        let deferredPrompt; 
-        const installPrompt = document.getElementById('installPrompt');
-        const installButton = document.getElementById('installButton');
-        const dismissButton = document.getElementById('dismissButton');
-        
-        // ==============================================================================
-        // PWA - ЛОГИКА ЗА ОФЛАЙН И ИНСТАЛАЦИЯ (Изисква service-worker.js) 
-        // ==============================================================================
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', function() {
-                // Моля, уверете се, че service-worker.js съществува в същата папка
-                navigator.serviceWorker.register('service-worker.js')
-                    .then(registration => {
-                        console.log('ServiceWorker регистрацията е успешна!');
-                    })
-                    .catch(error => {
-                        console.log('ServiceWorker регистрацията се провали:', error);
-                    });
-            });
-            
-            // Записваме промпта
-            window.addEventListener('beforeinstallprompt', (e) => {
-                e.preventDefault();
-                deferredPrompt = e;
-                // Покажи промпта веднага, ако вече е отключено
-                if (localStorage.getItem(LS_UNLOCKED_STATUS) === 'true') {
-                    showPermanentInstallPrompt();
-                }
-            });
-            
-            window.addEventListener('appinstalled', () => {
-                installPrompt.style.display = 'none';
-                deferredPrompt = null;
-                // Ако е инсталирано, изтриваме статуса за отхвърляне
-                localStorage.removeItem(LS_INSTALL_DISMISSED); 
-            });
-        }
-        
-        installButton.addEventListener('click', () => {
-            if (deferredPrompt) {
-                installPrompt.style.display = 'none'; // Скрива се преди показване на нативния прозорец
-                deferredPrompt.prompt();
-                
-                deferredPrompt.userChoice.then((choiceResult) => {
-                    deferredPrompt = null;
-                });
-            }
-        });
-        
-        // *** КОРЕКЦИЯ: Логика за "ОТКАЗ" (скрива, но НЕ записва в LS)
-        dismissButton.addEventListener('click', () => {
-            installPrompt.style.display = 'none';
-            // Прозорецът ще се появи отново при следващ рефреш, ако е налично PWA
-        });
-        
-        // ==============================================================================
-        // ФУНКЦИИ ЗА UUID
-        // ==============================================================================
-        function setCookie(name, value, days) {
-            let expires = "";
-            if (days) {
-                const date = new Date();
-                date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
-                expires = "; expires=" + date.toUTCString();
-            }
-            document.cookie = name + "=" + (value || "") + expires + "; path=/; SameSite=Lax; secure"; 
-        }
-        
-        function getCookie(name) {
-            const nameEQ = name + "=";
-            const ca = document.cookie.split(';');
-            for(let i = 0; i < ca.length; i++) {
-                let c = ca[i];
-                while (c.charAt(0) === ' ') c = c.substring(1, c.length);
-                if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
-            }
-            return null;
-        }
-        
-        function generateUUID() {
-            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-                const r = Math.random() * 16 | 0, 
-                      v = c === 'x' ? r : (r & 0x3 | 0x8);
-                return v.toString(16);
-            });
-        }
-        
-        function getOrCreateUUID() {
-            let uuid = localStorage.getItem(LS_UUID);
-            if (!uuid) {
-                uuid = getCookie(COOKIE_UUID);
-            }
-            if (!uuid) {
-                uuid = generateUUID();
-            }
-            localStorage.setItem(LS_UUID, uuid);
-            setCookie(COOKIE_UUID, uuid, 365 * 10); 
-            return uuid;
-        }
-        
-        function roundMoney(amount) {
-            return Math.round((amount + Number.EPSILON) * 100) / 100;
-        }
-        
-        function deleteUUIDCookie() {
-            document.cookie = COOKIE_UUID + '=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; SameSite=Lax; secure';
-        }
-        
-        function checkAndAutoReset() {
-            const TEN_HOURS_IN_MS = 10 * 60 * 60 * 1000; 
-            const lastResetTime = parseInt(localStorage.getItem('resto_lastResetTime') || '0', 10);
-            const currentTime = new Date().getTime();
-            const isProActive = localStorage.getItem(LS_UNLOCKED_STATUS) === 'true'; 
-        
-            if (isProActive && (currentTime - lastResetTime > TEN_HOURS_IN_MS)) {
-                document.getElementById('billEur').value = '';
-                document.getElementById('paidEur').value = '';
-                document.getElementById('paidBgn').value = '';
-                document.getElementById('resEur').innerText = '0.00';
-                document.getElementById('resBgn').innerText = '0.00';
-                document.getElementById('totalBillDisplay').innerText = '0.00';
-                document.getElementById('cashWarning').innerText = '';
-                document.querySelector('.results').style.color = "black";
-                document.getElementById('cashEur').value = '';
-                localStorage.removeItem('resto_cashEur');
-                localStorage.removeItem(LS_UUID);
-                deleteUUIDCookie(); 
-                localStorage.setItem('resto_lastResetTime', currentTime);
-                console.log("Автоматично ПЪЛНО НУЛИРАНЕ след 10 часа.");
-            }
-        }
-        
-        // ==============================================================================
-        // ЛОГИКА ЗА ОТКЛЮЧВАНЕ И PWA ПРОМПТ
-        // ==============================================================================
-        function checkProStatus() {
-            const isUnlocked = localStorage.getItem(LS_UNLOCKED_STATUS) === 'true';
-            
-            const fullLockOverlay = document.getElementById('fullLockOverlay');
-            const lockedContent = document.getElementById('lockedContent'); 
-            
-            const uuid = getOrCreateUUID();
-            console.log("Current Device UUID:", uuid);
-        
-            
-            if (isUnlocked) {
-                fullLockOverlay.style.display = 'none';
-                lockedContent.style.opacity = '1';
-                lockedContent.style.pointerEvents = 'auto'; 
-                
-                showPermanentInstallPrompt();
-            } else {
-                fullLockOverlay.style.display = 'flex';
-                lockedContent.style.opacity = '0'; 
-                lockedContent.style.pointerEvents = 'none'; 
-            }
-        }
-        
-        function showPermanentInstallPrompt() {
-            const isInstalled = window.matchMedia('(display-mode: standalone)').matches;
-            
-            // Проверяваме дали е бил натиснат старият бутон "Скрий завинага"
-            const isDismissedPermanently = localStorage.getItem(LS_INSTALL_DISMISSED) === 'true';
+    // ==============================================================================
+    // КОНСТАНТИ - ВАШИЯТ APPS SCRIPT URL Е ВГРАДЕН ТОЧНО ТУК
+    // *** АКТУАЛИЗИРАН С НОВИЯ CLOUDFLARE WORKER ПРОКСИ АДРЕС ***
+    // ==============================================================================
+    const API_ENDPOINT = "https://api.bgresto.online/api/unlock"; 
+    
+    const EURO_RATE = 1.95583;
+    
+    // Ключове за LocalStorage
+    const LS_UNLOCKED_STATUS = 'isProUnlocked_AppsScript';
+    const LS_UUID = 'device_uuid';
+    const COOKIE_UUID = 'uuid_cookie'; 
+    const LS_INSTALL_DISMISSED = 'pwa_dismissed_permanently'; 
+    
+    let deferredPrompt; 
+    const installPrompt = document.getElementById('installPrompt');
+    const installButton = document.getElementById('installButton');
+    const dismissButton = document.getElementById('dismissButton');
+    
+    // ==============================================================================
+    // PWA - ЛОГИКА ЗА ОФЛАЙН И ИНСТАЛАЦИЯ (Изисква service-worker.js) 
+    // ==============================================================================
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function() {
+            // Моля, уверете се, че service-worker.js съществува в същата папка
+            navigator.serviceWorker.register('service-worker.js')
+                .then(registration => {
+                    console.log('ServiceWorker регистрацията е успешна!');
+                })
+                .catch(error => {
+                    console.log('ServiceWorker регистрацията се провали:', error);
+                });
+        });
+        
+        // Записваме промпта
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            // Покажи промпта веднага, ако вече е отключено
+            if (localStorage.getItem(LS_UNLOCKED_STATUS) === 'true') {
+                showPermanentInstallPrompt();
+            }
+        });
+        
+        window.addEventListener('appinstalled', () => {
+            installPrompt.style.display = 'none';
+            deferredPrompt = null;
+            // Ако е инсталирано, изтриваме статуса за отхвърляне
+            localStorage.removeItem(LS_INSTALL_DISMISSED); 
+        });
+    }
+    
+    installButton.addEventListener('click', () => {
+        if (deferredPrompt) {
+            installPrompt.style.display = 'none'; // Скрива се преди показване на нативния прозорец
+            deferredPrompt.prompt();
+            
+            deferredPrompt.userChoice.then((choiceResult) => {
+                deferredPrompt = null;
+            });
+        }
+    });
+    
+    // *** КОРЕКЦИЯ: Логика за "ОТКАЗ" (скрива, но НЕ записва в LS)
+    dismissButton.addEventListener('click', () => {
+        installPrompt.style.display = 'none';
+        // Прозорецът ще се появи отново при следващ рефреш, ако е налично PWA
+    });
+    
+    // ==============================================================================
+    // ФУНКЦИИ ЗА UUID
+    // ==============================================================================
+    function setCookie(name, value, days) {
+        let expires = "";
+        if (days) {
+            const date = new Date();
+            date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+            expires = "; expires=" + date.toUTCString();
+        }
+        document.cookie = name + "=" + (value || "") + expires + "; path=/; SameSite=Lax; secure"; 
+    }
+    
+    function getCookie(name) {
+        const nameEQ = name + "=";
+        const ca = document.cookie.split(';');
+        for(let i = 0; i < ca.length; i++) {
+            let c = ca[i];
+            while (c.charAt(0) === ' ') c = c.substring(1, c.length);
+            if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
+        }
+        return null;
+    }
+    
+    function generateUUID() {
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+            const r = Math.random() * 16 | 0, 
+                  v = c === 'x' ? r : (r & 0x3 | 0x8);
+            return v.toString(16);
+        });
+    }
+    
+    function getOrCreateUUID() {
+        let uuid = localStorage.getItem(LS_UUID);
+        if (!uuid) {
+            uuid = getCookie(COOKIE_UUID);
+        }
+        if (!uuid) {
+            uuid = generateUUID();
+        }
+        localStorage.setItem(LS_UUID, uuid);
+        setCookie(COOKIE_UUID, uuid, 365 * 10); 
+        return uuid;
+    }
+    
+    function roundMoney(amount) {
+        return Math.round((amount + Number.EPSILON) * 100) / 100;
+    }
+    
+    function deleteUUIDCookie() {
+        document.cookie = COOKIE_UUID + '=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; SameSite=Lax; secure';
+    }
+    
+    function checkAndAutoReset() {
+        const TEN_HOURS_IN_MS = 10 * 60 * 60 * 1000; 
+        const lastResetTime = parseInt(localStorage.getItem('resto_lastResetTime') || '0', 10);
+        const currentTime = new Date().getTime();
+        const isProActive = localStorage.getItem(LS_UNLOCKED_STATUS) === 'true'; 
+    
+        if (isProActive && (currentTime - lastResetTime > TEN_HOURS_IN_MS)) {
+            document.getElementById('billEur').value = '';
+            document.getElementById('paidEur').value = '';
+            document.getElementById('paidBgn').value = '';
+            document.getElementById('resEur').innerText = '0.00';
+            document.getElementById('resBgn').innerText = '0.00';
+            document.getElementById('totalBillDisplay').innerText = '0.00';
+            document.getElementById('cashWarning').innerText = '';
+            document.querySelector('.results').style.color = "black";
+            document.getElementById('cashEur').value = ''; // Нулира стойността
+            // localStorage.removeItem('resto_cashEur'); // <-- Премахната логика за премахване на LS стойност
+            localStorage.removeItem(LS_UUID);
+            deleteUUIDCookie(); 
+            localStorage.setItem('resto_lastResetTime', currentTime);
+            console.log("Автоматично ПЪЛНО НУЛИРАНЕ след 10 часа.");
+        }
+    }
+    
+    // ==============================================================================
+    // ЛОГИКА ЗА ОТКЛЮЧВАНЕ И PWA ПРОМПТ
+    // ==============================================================================
+    function checkProStatus() {
+        const isUnlocked = localStorage.getItem(LS_UNLOCKED_STATUS) === 'true';
+        
+        const fullLockOverlay = document.getElementById('fullLockOverlay');
+        const lockedContent = document.getElementById('lockedContent'); 
+        
+        const uuid = getOrCreateUUID();
+        console.log("Current Device UUID:", uuid);
+    
+        
+        if (isUnlocked) {
+            fullLockOverlay.style.display = 'none';
+            lockedContent.style.opacity = '1';
+            lockedContent.style.pointerEvents = 'auto'; 
+            
+            showPermanentInstallPrompt();
+        } else {
+            fullLockOverlay.style.display = 'flex';
+            lockedContent.style.opacity = '0'; 
+            lockedContent.style.pointerEvents = 'none'; 
+        }
+    }
+    
+    function showPermanentInstallPrompt() {
+        const isInstalled = window.matchMedia('(display-mode: standalone)').matches;
+        
+        // Проверяваме дали е бил натиснат старият бутон "Скрий завинаги"
+        const isDismissedPermanently = localStorage.getItem(LS_INSTALL_DISMISSED) === 'true';
 
-            // Банерът се показва, ако PWA е налично, не е инсталирано 
-            // И не е бил натиснат старият бутон "Скрий завинага"
-            if (deferredPrompt && !isInstalled && !isDismissedPermanently) {
-                installPrompt.style.display = 'block';
-            } else {
-                installPrompt.style.display = 'none';
-            }
-        }
-        
-        async function unlockFeature() { 
-            const unlockKey = document.getElementById('unlockKey').value.trim();
-            const userEmail = document.getElementById('userEmail').value.trim().toLowerCase(); 
-            const uuid = getOrCreateUUID();
-            
-            if (!unlockKey) {
-                alert("Моля, въведете Вашия код.");
-                return;
-            }
-        
-            // Добавяме логика за Rate Limiting Error (429)
-            document.getElementById('unlockKey').placeholder = "Проверка на кода и имейла... Моля, изчакайте.";
-            document.querySelector('.lock-content .btn-unlock-buy').disabled = true;
-        
-            try {
-                // Използваме КОРИГИРАНАТА API_ENDPOINT
-                const url = `${API_ENDPOINT}?key=${encodeURIComponent(unlockKey)}&email=${encodeURIComponent(userEmail)}&uuid=${encodeURIComponent(uuid)}`;
-                const response = await fetch(url);
-                const data = await response.json();
-        
-                if (data.status === 'success') {
-                    localStorage.setItem(LS_UNLOCKED_STATUS, 'true');
-                    localStorage.setItem('resto_lastResetTime', new Date().getTime());
-                    alert(`Успех! Приложението е отключено! ${data.message}`);
-                    showPermanentInstallPrompt(); 
-                } else {
-                    let errorMessage = data.message || "Грешка при активирането. Пробвайте отново.";
-                    
-                    if (data.httpCode === '429') {
-                        // Rate Limiting Error: 20 опита за 24 часа
-                        errorMessage = 'Твърде много неуспешни опити. Устройството е блокирано за 24 часа. Моля, опитайте отново утре.';
-                    } else if (data.message.includes('Кодът е блокиран')) {
-                        // 72-часово блокиране за смяна на устройство
-                        errorMessage = `${data.message} \n\n Ако кодът Ви е работил преди, той е временно блокиран, но Вашето устройство остава активирано. Пробвайте отново, когато изтече таймерът.`;
-                    } else {
-                        // Подобрено съобщение за легитимни потребители (Gumroad забавяне)
-                          errorMessage = `${errorMessage}. Ако току-що сте направили покупка, моля, изчакайте **30-40 секунди** и опитайте отново.`;
-                    }
-                    
-                    alert(`Грешка: ${errorMessage}`);
-                    localStorage.removeItem(LS_UNLOCKED_STATUS);
-                }
-            } catch (error) {
-                alert("Грешка при свързване със сървъра. Проверете връзката си.");
-                console.error('API Error:', error);
-            }
-            
-            document.getElementById('unlockKey').value = ''; 
-            document.getElementById('userEmail').value = ''; 
-            document.getElementById('unlockKey').placeholder = "ВЪВЕДЕТЕ ВАШИЯ КОД ТУК"; 
-            document.querySelector('.lock-content .btn-unlock-buy').disabled = false;
-            checkProStatus(); 
-        }
-        
-        // ==============================================================================
-        // ЛОГИКА ЗА RESTO
-        // ==============================================================================
-        function saveCashLimit() {
-            // NOTE: Тъй като input event listener-ът в setupDecimalInputs() вече е почистил стойността
-            // и е заменил запетаите с точки, тук просто запазваме вече чистата стойност.
-            const isUnlocked = localStorage.getItem(LS_UNLOCKED_STATUS) === 'true';
-            if (isUnlocked) {
-                localStorage.setItem('resto_cashEur', document.getElementById('cashEur').value);
-            }
-        }
-        
-        function loadCashLimits() {
-            const isProActive = localStorage.getItem(LS_UNLOCKED_STATUS) === 'true';
-            const savedCashEur = localStorage.getItem('resto_cashEur');
-
-            if (savedCashEur !== null) {
-                let finalCashEurValue = savedCashEur;
+        // Банерът се показва, ако PWA е налично, не е инсталирано 
+        // И не е бил натиснат старият бутон "Скрий завинаги"
+        if (deferredPrompt && !isInstalled && !isDismissedPermanently) {
+            installPrompt.style.display = 'block';
+        } else {
+            installPrompt.style.display = 'none';
+        }
+    }
+    
+    async function unlockFeature() { 
+        const unlockKey = document.getElementById('unlockKey').value.trim();
+        const userEmail = document.getElementById('userEmail').value.trim().toLowerCase(); 
+        const uuid = getOrCreateUUID();
+        
+        if (!unlockKey) {
+            alert("Моля, въведете Вашия код.");
+            return;
+        }
+    
+        // Добавяме логика за Rate Limiting Error (429)
+        document.getElementById('unlockKey').placeholder = "Проверка на кода и имейла... Моля, изчакайте.";
+        document.querySelector('.lock-content .btn-unlock-buy').disabled = true;
+    
+        try {
+            // Използваме КОРИГИРАНАТА API_ENDPOINT
+            const url = `${API_ENDPOINT}?key=${encodeURIComponent(unlockKey)}&email=${encodeURIComponent(userEmail)}&uuid=${encodeURIComponent(uuid)}`;
+            const response = await fetch(url);
+            const data = await response.json();
+    
+            if (data.status === 'success') {
+                localStorage.setItem(LS_UNLOCKED_STATUS, 'true');
+                localStorage.setItem('resto_lastResetTime', new Date().getTime());
+                alert(`Успех! Приложението е отключено! ${data.message}`);
+                showPermanentInstallPrompt(); 
+            } else {
+                let errorMessage = data.message || "Грешка при активирането. Пробвайте отново.";
                 
-                // *** НОВА ЛОГИКА ЗА АВТОМАТИЧНО НАМАЛЯВАНЕ С 22 ПРИ ЗАРЕЖДАНЕ (САМО ЗА PRO) ***
-                if (isProActive) {
-                    let currentCashEur = parseFloat(savedCashEur);
-                    
-                    // Декрементираме с 22
-                    let newCashEur = currentCashEur - 22;
-                    
-                    // Гарантираме, че наличността няма да падне под нула
-                    if (newCashEur < 0) {
-                        newCashEur = 0;
-                    }
-
-                    finalCashEurValue = newCashEur.toFixed(2);
-                    
-                    // Записваме новата намалена стойност обратно в LocalStorage
-                    localStorage.setItem('resto_cashEur', finalCashEurValue);
-                    console.log(`Наличността в евро е автоматично намалена с 22. Нова стойност: ${finalCashEurValue}`);
+                if (data.httpCode === '429') {
+                    // Rate Limiting Error: 20 опита за 24 часа
+                    errorMessage = 'Твърде много неуспешни опити. Устройството е блокирано за 24 часа. Моля, опитайте отново утре.';
+                } else if (data.message.includes('Кодът е блокиран')) {
+                    // 72-часово блокиране за смяна на устройство
+                    errorMessage = `${data.message} \n\n Ако кодът Ви е работил преди, той е временно блокиран, но Вашето устройство остава активирано. Пробвайте отново, когато изтече таймерът.`;
+                } else {
+                    // Подобрено съобщение за легитимни потребители (Gumroad забавяне)
+                      errorMessage = `${errorMessage}. Ако току-що сте направили покупка, моля, изчакайте **30-40 секунди** и опитайте отново.`;
                 }
-                // *** КРАЙ НА НОВАТА ЛОГИКА ***
+                
+                alert(`Грешка: ${errorMessage}`);
+                localStorage.removeItem(LS_UNLOCKED_STATUS);
+            }
+        } catch (error) {
+            alert("Грешка при свързване със сървъра. Проверете връзката си.");
+            console.error('API Error:', error);
+        }
+        
+        document.getElementById('unlockKey').value = ''; 
+        document.getElementById('userEmail').value = ''; 
+        document.getElementById('unlockKey').placeholder = "ВЪВЕДЕТЕ ВАШИЯ КОД ТУК"; 
+        document.querySelector('.lock-content .btn-unlock-buy').disabled = false;
+        checkProStatus(); 
+    }
+    
+    // ==============================================================================
+    // ЛОГИКА ЗА RESTO
+    // ==============================================================================
+    
+    // *** КОРИГИРАНА ФУНКЦИЯ (НЕ ЗАПАЗВА В LS) ***
+    function saveCashLimit() {
+        // NOTE: Логиката за запазване на 'resto_cashEur' в LocalStorage е премахната
+        // по желание на потребителя. Всяка стойност ще бъде загубена при презареждане.
+        // Функцията остава празна.
+    }
+    
+    // *** КОРИГИРАНА ФУНКЦИЯ (НЕ ЗАРЕЖДА ОТ LS И НУЛИРА LS СТОЙНОСТТА) ***
+    function loadCashLimits() {
+        document.getElementById('cashEur').value = '';
+        localStorage.removeItem('resto_cashEur'); // Гарантираме, че Local Storage е чисто
+    }
+    
+    function calculateResto() {
+        const isProActive = localStorage.getItem(LS_UNLOCKED_STATUS) === 'true';
+    
+        if (!isProActive) {
+            alert("Приложението е заключено. Моля, въведете ключ за достъп.");
+            return; 
+        }
+        
+        // Всички стойности вече са форматирани като точки от setupDecimalInputs()
+        let billEurInput = parseFloat(document.getElementById('billEur').value) || 0;
+        let paidEur = parseFloat(document.getElementById('paidEur').value) || 0;
+        let paidBgn = parseFloat(document.getElementById('paidBgn').value) || 0;
+        
+        let cashEurValue = document.getElementById('cashEur').value;
+        let cashEurAvailable = cashEurValue === '' ? Infinity : parseFloat(cashEurValue); 
+    
+        let totalBillInLeva = (billEurInput * EURO_RATE);
+        let totalPaidInLeva = (paidEur * EURO_RATE) + paidBgn;
+        let rawChangeLeva = totalPaidInLeva - totalBillInLeva;
+        
+        document.getElementById('totalBillDisplay').innerText = roundMoney(totalBillInLeva).toFixed(2);
+        document.getElementById('cashWarning').innerText = ''; 
+        document.querySelector('.results').style.color = "black";
+    
+        if (rawChangeLeva < -0.009) {
+            document.getElementById('resEur').innerText = "Недостиг!";
+            document.getElementById('resBgn').innerText = roundMoney(Math.abs(rawChangeLeva)).toFixed(2) + " лв";
+            document.querySelector('.results').style.color = "#d93025"; 
+            return;
+        }
+        if (rawChangeLeva < 0.009) {
+            document.getElementById('resEur').innerText = "0.00";
+            document.getElementById('resBgn').innerText = "0.00";
+            return;
+        }
+    
+        let totalChangeLeva = roundMoney(rawChangeLeva); 
+        let finalEurToReturn = 0;
+        let finalBgnToReturn = 0;
+        
+        let totalChangeEurDesired = roundMoney(totalChangeLeva / EURO_RATE);
+        
+        if (totalChangeEurDesired <= cashEurAvailable) {
+            finalEurToReturn = totalChangeEurDesired;
+            finalBgnToReturn = 0; 
+            
+        } else {
+            finalEurToReturn = cashEurAvailable; 
+    
+            let eurInLevaReturned = finalEurToReturn * EURO_RATE;
+            let remainingChangeInLeva = totalChangeLeva - eurInLevaReturned;
+            
+            finalBgnToReturn = roundMoney(remainingChangeInLeva);
+    
+            if (cashEurAvailable !== Infinity) {
+                document.getElementById('cashWarning').innerText = `ВНИМАНИЕ: Недостатъчно евро. Връщаш ${finalEurToReturn.toFixed(2)}€ и остатъка (${finalBgnToReturn.toFixed(2)} лв.) в лева.`;
+                document.querySelector('.results').style.color = "orange";
+            }
+        }
+        
+        document.getElementById('resEur').innerText = finalEurToReturn.toFixed(2);
+        document.getElementById('resBgn').innerText = finalBgnToReturn.toFixed(2);
+    }
+    
+    function resetFields() {
+        const isProActive = localStorage.getItem(LS_UNLOCKED_STATUS) === 'true';
+    
+        if (!isProActive) {
+            alert("Приложението е заключено. Моля, въведете ключ за достъп.");
+            return; 
+        }
+        
+        document.getElementById('billEur').value = '';
+        document.getElementById('paidEur').value = '';
+        document.getElementById('paidBgn').value = '';
+        
+        document.getElementById('resEur').innerText = '0.00';
+        document.getElementById('resBgn').innerText = '0.00';
+        document.getElementById('totalBillDisplay').innerText = '0.00';
+        document.getElementById('cashWarning').innerText = ''; 
+        document.querySelector('.results').style.color = "black";
+        
+        document.getElementById('cashEur').value = '';
+        localStorage.removeItem('resto_cashEur');
+        
+        localStorage.setItem('resto_lastResetTime', new Date().getTime());
+    }
 
-                document.getElementById('cashEur').value = finalCashEurValue;
-            } else {
-                document.getElementById('cashEur').value = '';
-            }
-        }
-        
-        function calculateResto() {
-            const isProActive = localStorage.getItem(LS_UNLOCKED_STATUS) === 'true';
-        
-            if (!isProActive) {
-                alert("Приложението е заключено. Моля, въведете ключ за достъп.");
-                return; 
-            }
-            
-            // Всички стойности вече са форматирани като точки от setupDecimalInputs()
-            let billEurInput = parseFloat(document.getElementById('billEur').value) || 0;
-            let paidEur = parseFloat(document.getElementById('paidEur').value) || 0;
-            let paidBgn = parseFloat(document.getElementById('paidBgn').value) || 0;
-            
-            let cashEurValue = document.getElementById('cashEur').value;
-            let cashEurAvailable = cashEurValue === '' ? Infinity : parseFloat(cashEurValue); 
-        
-            let totalBillInLeva = (billEurInput * EURO_RATE);
-            let totalPaidInLeva = (paidEur * EURO_RATE) + paidBgn;
-            let rawChangeLeva = totalPaidInLeva - totalBillInLeva;
-            
-            document.getElementById('totalBillDisplay').innerText = roundMoney(totalBillInLeva).toFixed(2);
-            document.getElementById('cashWarning').innerText = ''; 
-            document.querySelector('.results').style.color = "black";
-        
-            if (rawChangeLeva < -0.009) {
-                document.getElementById('resEur').innerText = "Недостиг!";
-                document.getElementById('resBgn').innerText = roundMoney(Math.abs(rawChangeLeva)).toFixed(2) + " лв";
-                document.querySelector('.results').style.color = "#d93025"; 
-                return;
-            }
-            if (rawChangeLeva < 0.009) {
-                document.getElementById('resEur').innerText = "0.00";
-                document.getElementById('resBgn').innerText = "0.00";
-                return;
-            }
-        
-            let totalChangeLeva = roundMoney(rawChangeLeva); 
-            let finalEurToReturn = 0;
-            let finalBgnToReturn = 0;
-            
-            let totalChangeEurDesired = roundMoney(totalChangeLeva / EURO_RATE);
-            
-            if (totalChangeEurDesired <= cashEurAvailable) {
-                finalEurToReturn = totalChangeEurDesired;
-                finalBgnToReturn = 0; 
-                
-            } else {
-                finalEurToReturn = cashEurAvailable; 
-        
-                let eurInLevaReturned = finalEurToReturn * EURO_RATE;
-                let remainingChangeInLeva = totalChangeLeva - eurInLevaReturned;
-                
-                finalBgnToReturn = roundMoney(remainingChangeInLeva);
-        
-                if (cashEurAvailable !== Infinity) {
-                    document.getElementById('cashWarning').innerText = `ВНИМАНИЕ: Недостатъчно евро. Връщаш ${finalEurToReturn.toFixed(2)}€ и остатъка (${finalBgnToReturn.toFixed(2)} лв.) в лева.`;
-                    document.querySelector('.results').style.color = "orange";
-                }
-            }
-            
-            document.getElementById('resEur').innerText = finalEurToReturn.toFixed(2);
-            document.getElementById('resBgn').innerText = finalBgnToReturn.toFixed(2);
-        }
-        
-        function resetFields() {
-            const isProActive = localStorage.getItem(LS_UNLOCKED_STATUS) === 'true';
-        
-            if (!isProActive) {
-                alert("Приложението е заключено. Моля, въведете ключ за достъп.");
-                return; 
-            }
-            
-            document.getElementById('billEur').value = '';
-            document.getElementById('paidEur').value = '';
-            document.getElementById('paidBgn').value = '';
-            
-            document.getElementById('resEur').innerText = '0.00';
-            document.getElementById('resBgn').innerText = '0.00';
-            document.getElementById('totalBillDisplay').innerText = '0.00';
-            document.getElementById('cashWarning').innerText = ''; 
-            document.querySelector('.results').style.color = "black";
-            
-            document.getElementById('cashEur').value = '';
-            localStorage.removeItem('resto_cashEur');
-            
-            localStorage.setItem('resto_lastResetTime', new Date().getTime());
-        }
-
-        // ==============================================================================
-        // НОВАТА ФУНКЦИЯ ЗА ОБРАБОТКА НА ДЕСЕТИЧНИ ЗНАЦИ
-        // ==============================================================================
-        function setupDecimalInputs() {
-            // IDs на всички входни полета, които трябва да поддържат точка и запетая
-            const ids = ['billEur', 'paidEur', 'paidBgn', 'cashEur'];
-            ids.forEach(id => {
-                const input = document.getElementById(id);
-                if (input) {
-                    // Добавяме event listener, който замества запетаите с точки веднага след въвеждане.
-                    // Това решава проблема със запетаята на iOS, когато input type е 'text'.
-                    input.addEventListener('input', function() {
-                        // 1. Позволява въвеждане само на цифри, точка и запетая (за чистота).
-                        // 2. Замества всички запетаи (,) с точки (.).
-                        this.value = this.value.replace(/[^0-9.,]/g, '').replace(/,/g, '.');
-                    });
-                }
-            });
-        }
-    </script>
+    // ==============================================================================
+    // НОВАТА ФУНКЦИЯ ЗА ОБРАБОТКА НА ДЕСЕТИЧНИ ЗНАЦИ
+    // ==============================================================================
+    function setupDecimalInputs() {
+        // IDs на всички входни полета, които трябва да поддържат точка и запетая
+        const ids = ['billEur', 'paidEur', 'paidBgn', 'cashEur'];
+        ids.forEach(id => {
+            const input = document.getElementById(id);
+            if (input) {
+                // Добавяме event listener, който замества запетаите с точки веднага след въвеждане.
+                // Това решава проблема със запетаята на iOS, когато input type е 'text'.
+                input.addEventListener('input', function() {
+                    // 1. Позволява въвеждане само на цифри, точка и запетая (за чистота).
+                    // 2. Замества всички запетаи (,) с точки (.).
+                    this.value = this.value.replace(/[^0-9.,]/g, '').replace(/,/g, '.');
+                });
+            }
+        });
+    }
+</script>
 </body>
 </html>
