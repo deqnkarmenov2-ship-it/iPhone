@@ -1,697 +1,702 @@
 <!DOCTYPE html>
 <html lang="bg">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BG РЕСТО</title>
-    
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-    <meta http-equiv="Pragma" content="no-cache">
-    <meta http-equiv="Expires" content="0">
-    
-    <link rel="manifest" href="manifest.json"> 
-    <link rel="apple-touch-icon" sizes="192x192" href="icon-192.png">
-    <link rel="apple-touch-icon" sizes="512x512" href="icon-512.png">
-    
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="theme-color" content="#158062">
-    <meta name="application-name" content="BG РЕСТО">
-
-    <style>
-        /* ОСНОВНИ СТИЛОВЕ */
-        html, body {
-            height: 100%; 
-            margin: 0;
-            overflow: hidden; 
-        }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: #f2f2f7;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-        .app-container {
-            background-color: white;
-            width: 100%;
-            max-width: 375px;
-            height: 100%; 
-            border-radius: 0; 
-            box-shadow: none; 
-            display: flex;
-            flex-direction: column;
-            position: relative; 
-        }
-        .content {
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            flex-grow: 1; 
-            overflow-y: auto; 
-            transition: opacity 0.3s;
-        }
-
-        /* СТИЛ ЗА ГЛАВНАТА ИНСТРУКЦИЯ */
-        .instruction {
-            font-size: 24px; 
-            font-weight: bold;
-            color: black; 
-            text-align: center;
-            margin-bottom: 25px; 
-            padding-top: 15px; 
-        }
-        
-        /* СТИЛОВЕ ЗА ЗАКЛЮЧВАНЕ */
-        .full-lock-overlay {
-            position: absolute;
-            top: 0; 
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: rgba(255, 255, 255, 0.98);
-            z-index: 990; 
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-            text-align: center;
-        }
-        .full-lock-overlay .lock-content {
-            background-color: #f2f2f7;
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-        }
-
-        /* СТИЛОВЕ ЗА ВХОДНИ ПОЛЕТА */
-        .cash-section {
-            width: 100%;
-            border-top: 1px solid #e0e0e0;
-            margin-top: 15px; 
-            padding-top: 10px;
-            flex-shrink: 0;
-        }
-        .cash-section h3 {
-            margin: 10px 0;
-            font-size: 16px;
-            color: #158062;
-            text-align: center;
-        }
-        .cash-section label {
-            display: block; 
-            text-align: left; 
-            font-size: 14px; 
-            margin-bottom: 5px; 
-            color: #555;
-            padding-left: 5px;
-        }
-        input {
-            width: 100%;
-            padding: 15px;
-            margin-bottom: 10px; 
-            border: 1px solid #e0e0e0;
-            border-radius: 12px;
-            font-size: 16px;
-            box-sizing: border-box;
-            color: #333;
-            outline: none;
-            flex-shrink: 0;
-        }
-        input:focus {
-            border-color: #158062;
-        }
-        /* Запазваме стила за премахване на стрелките, въпреки че input type вече е text */
-        input::-webkit-outer-spin-button,
-        input::-webkit-inner-spin-button {
-            -webkit-appearance: none;
-            margin: 0;
-        }
-        
-        /* СТИЛОВЕ ЗА БУТОНИ */
-        .btn-calc, .btn-calc-pink, .btn-reset { 
-            background-color: #158062; 
-            color: white;
-            width: 100%;
-            padding: 15px;
-            border: none;
-            border-radius: 12px;
-            font-size: 16px;
-            font-weight: bold;
-            text-transform: uppercase;
-            cursor: pointer;
-            margin-top: 10px;
-            margin-bottom: 15px; 
-            box-sizing: border-box; 
-            flex-shrink: 0;
-        }
-        .btn-calc:active, .btn-calc-pink:active {
-            background-color: #0f5f49;
-        }
-        .btn-unlock-buy {
-            background-color: #d93025 !important; 
-            color: white;
-            width: 100%;
-            padding: 15px;
-            border: none;
-            border-radius: 12px;
-            font-size: 16px;
-            font-weight: bold;
-            text-transform: uppercase;
-            cursor: pointer;
-            margin-top: 15px; 
-            margin-bottom: 0; 
-            display: block;
-            text-align: center;
-            text-decoration: none;
-            box-sizing: border-box; 
-        }
-        .lock-content .btn-calc {
-            margin-top: 10px; 
-            margin-bottom: 0; 
-        }
-        .btn-reset {
-            background-color: #d93025; /* Червен цвят */
-            color: white;
-            border: none;
-            width: 100%;
-            padding: 15px;
-            border-radius: 12px;
-            font-size: 16px;
-            font-weight: bold;
-            text-transform: uppercase;
-            cursor: pointer;
-            margin-top: 5px; 
-            margin-bottom: 20px; 
-            box-sizing: border-box;
-            flex-shrink: 0;
-        }
-
-        /* СТИЛОВЕ ЗА РЕЗУЛТАТИ */
-        .results {
-            text-align: center;
-            font-size: 20px;
-            font-weight: 500;
-            color: #000;
-            flex-shrink: 0;
-        }
-        .results p {
-            margin: 5px 0; 
-            font-size: 20px; 
-            font-weight: bold;
-        }
-        .results .total-bill {
-            font-size: 14px; 
-            margin-top: 10px; 
-            color: #555;
-            font-weight: normal;
-        }
-        .results .warning {
-            color: orange;
-            font-size: 16px;
-            font-weight: 600;
-            margin-top: 5px;
-        }
-
-        /* ----------------------------------------------------- */
-        /* СТИЛОВЕ ЗА ИНЛАЙН ИНСТАЛАЦИОНЕН БАНЕР (PWA Prompt) */
-        /* ----------------------------------------------------- */
-        .install-prompt-modal {
-            width: 100%;
-            background-color: #158062;
-            padding: 10px 15px;
-            margin-bottom: 20px;
-            border-radius: 12px;
-            box-sizing: border-box;
-            color: white;
-            text-align: center;
-            z-index: 10;
-        }
-        
-        .prompt-content p {
-            margin: 5px 0 10px 0;
-            font-size: 16px;
-            font-weight: bold;
-        }
-        
-        .prompt-content button {
-            width: 48%; 
-            margin: 5px 1% 0;
-            display: inline-block;
-            box-sizing: border-box;
-            padding: 8px;
-            font-size: 14px;
-        }
-        
-        /* Специфични цветове за бутоните в банера: */
-        #installPrompt #installButton {
-            background-color: white; 
-            color: #158062;
-        }
-        
-        /* *** КОРЕКЦИЯ: Бутонът "Отказ" да е червен като .btn-reset *** */
-        #installPrompt #dismissButton {
-            background-color: #d93025; /* Червен фон */
-            color: white;
-            border: none;
-            font-weight: bold;
-        }
-    </style>
-</head>
-<body onload="checkAndAutoReset(); loadCashLimits(); checkProStatus(); setupDecimalInputs();"> <div class="app-container">
-        
-        <div class="content" id="lockedContent">
-            
-            <div class="instruction">
-                Въведи сметката и сумата,<br> с която е платено
-            </div>
-            
-            <div id="installPrompt" class="install-prompt-modal" style="display: none;">
-                <div class="prompt-content">
-                    <p>Инсталирай приложението на телефона си за бърз достъп!</p>
-                    <button id="installButton" class="btn-calc">Инсталирай</button>
-                    <button id="dismissButton" class="btn-reset">ОТКАЗ</button>
-                </div>
-            </div>
-            
-            <input type="text" id="billEur" placeholder="Сметка в евро" inputmode="decimal">
-
-            <input type="text" id="paidEur" placeholder="Платено в евро" inputmode="decimal">
-            <input type="text" id="paidBgn" placeholder="Платено в лв" inputmode="decimal">
-
-            <button class="btn-calc" onclick="calculateResto()">ИЗЧИСЛИ РЕСТО</button>
-
-            <div class="results">
-                <p>Връщаш €: <span id="resEur">0.00</span></p>
-                <p>Връщаш лв: <span id="resBgn">0.00</span></p>
-                <p class="total-bill">Обща сметка: <span id="totalBillDisplay">0.00</span> лв</p>
-                <p class="warning" id="cashWarning"></p>
-            </div>
-            
-            <div class="cash-section">
-                <h3>Наличност в евро (за оптимизация)</h3>
-                
-                <label for="cashEur">Наличност в евро (€):</label>
-                <input type="text" id="cashEur" placeholder="Въведи 0, ако нямаш евро" inputmode="decimal" oninput="saveCashLimit()">
-            </div>
-            
-            <button class="btn-calc-pink" onclick="calculateResto()">ИЗЧИСЛИ РЕСТО</button>
-
-            <button class="btn-reset" onclick="resetFields()">НУЛИРАНЕ</button>
-        </div>
-        
-        <div class="full-lock-overlay" id="fullLockOverlay" style="display:none;">
-            <div class="lock-content">
-                
-                <h3 style="font-size: 20px; font-weight: bold; color: #158062; margin-bottom: 15px; margin-top: 0;">BG РЕСТО калкулатор</h3>
-
-                <a href="https://bgresto.gumroad.com/l/zrxcf?wanted=true" class="btn-unlock-buy" target="_blank" style="margin-top: 0; margin-bottom: 25px; background-color: #158062 !important;">
-                    КУПИ ЗА 5.99 USD
-                </a>
-                
-                <p style="font-size: 16px; margin: 0 0 25px 0; line-height: 1.4; color: black; font-weight: 500;">
-                    Моля, въведете вашия **EMAIL** и **УНИКАЛЕН КОД**, получен след покупка.
-                </p>
-                
-                <input type="email" id="userEmail" placeholder="ВЪВЕДЕТЕ EMAIL" style="margin-bottom: 10px;"/> 
-                
-                <input type="text" id="unlockKey" placeholder="ВЪВЕДЕТЕ ВАШИЯ КОД ТУК" style="margin-bottom: 15px;"/> 
-                
-                <button class="btn-calc btn-unlock-buy" onclick="unlockFeature()" style="margin-top: 10px; margin-bottom: 0;">АКТИВИРАЙ</button> 
-
-            </div>
-        </div>
-    </div>
-    
-    <script>
-    // ==============================================================================
-    // КОНСТАНТИ - ВАШИЯТ APPS SCRIPT URL Е ВГРАДЕН ТОЧНО ТУК
-    // *** АКТУАЛИЗИРАН С НОВИЯ CLOUDFLARE WORKER ПРОКСИ АДРЕС ***
-    // ==============================================================================
-    const API_ENDPOINT = "https://api.bgresto.online/api/unlock"; 
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BG РЕСТО</title>
     
-    const EURO_RATE = 1.95583;
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     
-    // Ключове за LocalStorage
-    const LS_UNLOCKED_STATUS = 'isProUnlocked_AppsScript';
-    const LS_UUID = 'device_uuid';
-    const COOKIE_UUID = 'uuid_cookie'; 
-    const LS_INSTALL_DISMISSED = 'pwa_dismissed_permanently'; 
+    <link rel="manifest" href="manifest.json"> 
+    <link rel="apple-touch-icon" sizes="192x192" href="icon-192.png">
+    <link rel="apple-touch-icon" sizes="512x512" href="icon-512.png">
     
-    let deferredPrompt; 
-    const installPrompt = document.getElementById('installPrompt');
-    const installButton = document.getElementById('installButton');
-    const dismissButton = document.getElementById('dismissButton');
-    
-    // ==============================================================================
-    // PWA - ЛОГИКА ЗА ОФЛАЙН И ИНСТАЛАЦИЯ (Изисква service-worker.js) 
-    // ==============================================================================
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', function() {
-            // Моля, уверете се, че service-worker.js съществува в същата папка
-            navigator.serviceWorker.register('service-worker.js')
-                .then(registration => {
-                    console.log('ServiceWorker регистрацията е успешна!');
-                })
-                .catch(error => {
-                    console.log('ServiceWorker регистрацията се провали:', error);
-                });
-        });
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#158062">
+    <meta name="application-name" content="BG РЕСТО">
+
+    <style>
+        /* ОСНОВНИ СТИЛОВЕ */
+        html, body {
+            height: 100%; 
+            margin: 0;
+            overflow: hidden; 
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f2f2f7;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .app-container {
+            background-color: white;
+            width: 100%;
+            max-width: 375px;
+            height: 100%; 
+            border-radius: 0; 
+            box-shadow: none; 
+            display: flex;
+            flex-direction: column;
+            position: relative; 
+        }
+        .content {
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex-grow: 1; 
+            overflow-y: auto; 
+            transition: opacity 0.3s;
+        }
+
+        /* СТИЛ ЗА ГЛАВНАТА ИНСТРУКЦИЯ */
+        .instruction {
+            font-size: 24px; 
+            font-weight: bold;
+            color: black; 
+            text-align: center;
+            margin-bottom: 25px; 
+            padding-top: 15px; 
+        }
         
-        // Записваме промпта
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            deferredPrompt = e;
-            // Покажи промпта веднага, ако вече е отключено
-            if (localStorage.getItem(LS_UNLOCKED_STATUS) === 'true') {
-                showPermanentInstallPrompt();
+        /* СТИЛОВЕ ЗА ЗАКЛЮЧВАНЕ */
+        .full-lock-overlay {
+            position: absolute;
+            top: 0; 
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(255, 255, 255, 0.98);
+            z-index: 990; 
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            text-align: center;
+        }
+        .full-lock-overlay .lock-content {
+            background-color: #f2f2f7;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        /* СТИЛОВЕ ЗА ВХОДНИ ПОЛЕТА */
+        .cash-section {
+            width: 100%;
+            border-top: 1px solid #e0e0e0;
+            margin-top: 15px; 
+            padding-top: 10px;
+            flex-shrink: 0;
+        }
+        .cash-section h3 {
+            margin: 10px 0;
+            font-size: 16px;
+            color: #158062;
+            text-align: center;
+        }
+        .cash-section label {
+            display: block; 
+            text-align: left; 
+            font-size: 14px; 
+            margin-bottom: 5px; 
+            color: #555;
+            padding-left: 5px;
+        }
+        input {
+            width: 100%;
+            padding: 15px;
+            margin-bottom: 10px; 
+            border: 1px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 16px;
+            box-sizing: border-box;
+            color: #333;
+            outline: none;
+            flex-shrink: 0;
+        }
+        input:focus {
+            border-color: #158062;
+        }
+        /* Запазваме стила за премахване на стрелките, въпреки че input type вече е text */
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        
+        /* СТИЛОВЕ ЗА БУТОНИ */
+        .btn-calc, .btn-calc-pink, .btn-reset { 
+            background-color: #158062; 
+            color: white;
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: bold;
+            text-transform: uppercase;
+            cursor: pointer;
+            margin-top: 10px;
+            margin-bottom: 15px; 
+            box-sizing: border-box; 
+            flex-shrink: 0;
+        }
+        .btn-calc:active, .btn-calc-pink:active {
+            background-color: #0f5f49;
+        }
+        .btn-unlock-buy {
+            background-color: #d93025 !important; 
+            color: white;
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: bold;
+            text-transform: uppercase;
+            cursor: pointer;
+            margin-top: 15px; 
+            margin-bottom: 0; 
+            display: block;
+            text-align: center;
+            text-decoration: none;
+            box-sizing: border-box; 
+        }
+        .lock-content .btn-calc {
+            margin-top: 10px; 
+            margin-bottom: 0; 
+        }
+        .btn-reset {
+            background-color: #d93025; /* Червен цвят */
+            color: white;
+            border: none;
+            width: 100%;
+            padding: 15px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: bold;
+            text-transform: uppercase;
+            cursor: pointer;
+            margin-top: 5px; 
+            margin-bottom: 20px; 
+            box-sizing: border-box;
+            flex-shrink: 0;
+        }
+
+        /* СТИЛОВЕ ЗА РЕЗУЛТАТИ */
+        .results {
+            text-align: center;
+            font-size: 20px;
+            font-weight: 500;
+            color: #000;
+            flex-shrink: 0;
+        }
+        .results p {
+            margin: 5px 0; 
+            font-size: 20px; 
+            font-weight: bold;
+        }
+        .results .total-bill {
+            font-size: 14px; 
+            margin-top: 10px; 
+            color: #555;
+            font-weight: normal;
+        }
+        .results .warning {
+            color: orange;
+            font-size: 16px;
+            font-weight: 600;
+            margin-top: 5px;
+        }
+
+        /* ----------------------------------------------------- */
+        /* СТИЛОВЕ ЗА ИНЛАЙН ИНСТАЛАЦИОНЕН БАНЕР (PWA Prompt) */
+        /* ----------------------------------------------------- */
+        .install-prompt-modal {
+            width: 100%;
+            background-color: #158062;
+            padding: 10px 15px;
+            margin-bottom: 20px;
+            border-radius: 12px;
+            box-sizing: border-box;
+            color: white;
+            text-align: center;
+            z-index: 10;
+        }
+        
+        .prompt-content p {
+            margin: 5px 0 10px 0;
+            font-size: 16px;
+            font-weight: bold;
+        }
+        
+        .prompt-content button {
+            width: 48%; 
+            margin: 5px 1% 0;
+            display: inline-block;
+            box-sizing: border-box;
+            padding: 8px;
+            font-size: 14px;
+        }
+        
+        /* Специфични цветове за бутоните в банера: */
+        #installPrompt #installButton {
+            background-color: white; 
+            color: #158062;
+        }
+        
+        /* *** КОРЕКЦИЯ: Бутонът "Отказ" да е червен като .btn-reset *** */
+        #installPrompt #dismissButton {
+            background-color: #d93025; /* Червен фон */
+            color: white;
+            border: none;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body onload="checkAndAutoReset(); loadCashLimits(); checkProStatus(); setupDecimalInputs();"> 
+    <div class="app-container">
+        
+        <div class="content" id="lockedContent">
+            
+            <div class="instruction">
+                Въведи сметката и сумата,<br> с която е платено
+            </div>
+            
+            <div id="installPrompt" class="install-prompt-modal" style="display: none;">
+                <div class="prompt-content">
+                    <p>Инсталирай приложението на телефона си за бърз достъп!</p>
+                    <button id="installButton" class="btn-calc">Инсталирай</button>
+                    <button id="dismissButton" class="btn-reset">ОТКАЗ</button>
+                </div>
+            </div>
+            
+            <input type="text" id="billEur" placeholder="Сметка в евро" inputmode="decimal">
+
+            <input type="text" id="paidEur" placeholder="Платено в евро" inputmode="decimal">
+            <input type="text" id="paidBgn" placeholder="Платено в лв" inputmode="decimal">
+
+            <button class="btn-calc" onclick="calculateResto()">ИЗЧИСЛИ РЕСТО</button>
+
+            <div class="results">
+                <p>Връщаш €: <span id="resEur">0.00</span></p>
+                <p>Връщаш лв: <span id="resBgn">0.00</span></p>
+                <p class="total-bill">Обща сметка: <span id="totalBillDisplay">0.00</span> лв</p>
+                <p class="warning" id="cashWarning"></p>
+            </div>
+            
+            <div class="cash-section">
+                <h3>Наличност в евро (за оптимизация)</h3>
+                
+                <label for="cashEur">Наличност в евро (€):</label>
+                <input type="text" id="cashEur" placeholder="Въведи 0, ако нямаш евро" inputmode="decimal" oninput="saveCashLimit()">
+            </div>
+            
+            <button class="btn-calc-pink" onclick="calculateResto()">ИЗЧИСЛИ РЕСТО</button>
+
+            <button class="btn-reset" onclick="resetFields()">НУЛИРАНЕ</button>
+        </div>
+        
+        <div class="full-lock-overlay" id="fullLockOverlay" style="display:none;">
+            <div class="lock-content">
+                
+                <h3 style="font-size: 20px; font-weight: bold; color: #158062; margin-bottom: 15px; margin-top: 0;">BG РЕСТО калкулатор</h3>
+
+                <a href="https://bgresto.gumroad.com/l/zrxcf?wanted=true" class="btn-unlock-buy" target="_blank" style="margin-top: 0; margin-bottom: 25px; background-color: #158062 !important;">
+                    КУПИ ЗА 5.99 USD
+                </a>
+                
+                <p style="font-size: 16px; margin: 0 0 25px 0; line-height: 1.4; color: black; font-weight: 500;">
+                    Моля, въведете вашия **EMAIL** и **УНИКАЛЕН КОД**, получен след покупка.
+                </p>
+                
+                <input type="email" id="userEmail" placeholder="ВЪВЕДЕТЕ EMAIL" style="margin-bottom: 10px;"/> 
+                
+                <input type="text" id="unlockKey" placeholder="ВЪВЕДЕТЕ ВАШИЯ КОД ТУК" style="margin-bottom: 15px;"/> 
+                
+                <button class="btn-calc btn-unlock-buy" onclick="unlockFeature()" style="margin-top: 10px; margin-bottom: 0;">АКТИВИРАЙ</button> 
+
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // ==============================================================================
+        // КОНСТАНТИ - ВАШИЯТ APPS SCRIPT URL Е ВГРАДЕН ТОЧНО ТУК
+        // *** АКТУАЛИЗИРАН С НОВИЯ CLOUDFLARE WORKER ПРОКСИ АДРЕС ***
+        // ==============================================================================
+        const API_ENDPOINT = "https://api.bgresto.online/api/unlock"; 
+        
+        const EURO_RATE = 1.95583;
+        
+        // Ключове за LocalStorage
+        const LS_UNLOCKED_STATUS = 'isProUnlocked_AppsScript';
+        const LS_UUID = 'device_uuid';
+        const COOKIE_UUID = 'uuid_cookie'; 
+        const LS_INSTALL_DISMISSED = 'pwa_dismissed_permanently'; 
+        
+        let deferredPrompt; 
+        const installPrompt = document.getElementById('installPrompt');
+        const installButton = document.getElementById('installButton');
+        const dismissButton = document.getElementById('dismissButton');
+        
+        // ==============================================================================
+        // PWA - ЛОГИКА ЗА ОФЛАЙН И ИНСТАЛАЦИЯ (Изисква service-worker.js) 
+        // ==============================================================================
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                // Моля, уверете се, че service-worker.js съществува в същата папка
+                navigator.serviceWorker.register('service-worker.js')
+                    .then(registration => {
+                        console.log('ServiceWorker регистрацията е успешна!');
+                    })
+                    .catch(error => {
+                        console.log('ServiceWorker регистрацията се провали:', error);
+                    });
+            });
+            
+            // Записваме промпта
+            window.addEventListener('beforeinstallprompt', (e) => {
+                e.preventDefault();
+                deferredPrompt = e;
+                // Покажи промпта веднага, ако вече е отключено
+                if (localStorage.getItem(LS_UNLOCKED_STATUS) === 'true') {
+                    showPermanentInstallPrompt();
+                }
+            });
+            
+            window.addEventListener('appinstalled', () => {
+                installPrompt.style.display = 'none';
+                deferredPrompt = null;
+                // Ако е инсталирано, изтриваме статуса за отхвърляне
+                localStorage.removeItem(LS_INSTALL_DISMISSED); 
+            });
+        }
+        
+        installButton.addEventListener('click', () => {
+            if (deferredPrompt) {
+                installPrompt.style.display = 'none'; // Скрива се преди показване на нативния прозорец
+                deferredPrompt.prompt();
+                
+                deferredPrompt.userChoice.then((choiceResult) => {
+                    deferredPrompt = null;
+                });
             }
         });
         
-        window.addEventListener('appinstalled', () => {
+        // *** КОРЕКЦИЯ: Логика за "ОТКАЗ" (скрива, но НЕ записва в LS)
+        dismissButton.addEventListener('click', () => {
             installPrompt.style.display = 'none';
-            deferredPrompt = null;
-            // Ако е инсталирано, изтриваме статуса за отхвърляне
-            localStorage.removeItem(LS_INSTALL_DISMISSED); 
+            // Прозорецът ще се появи отново при следващ рефреш, ако е налично PWA
         });
-    }
-    
-    installButton.addEventListener('click', () => {
-        if (deferredPrompt) {
-            installPrompt.style.display = 'none'; // Скрива се преди показване на нативния прозорец
-            deferredPrompt.prompt();
-            
-            deferredPrompt.userChoice.then((choiceResult) => {
-                deferredPrompt = null;
+        
+        // ==============================================================================
+        // ФУНКЦИИ ЗА UUID
+        // ==============================================================================
+        function setCookie(name, value, days) {
+            let expires = "";
+            if (days) {
+                const date = new Date();
+                date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+                expires = "; expires=" + date.toUTCString();
+            }
+            document.cookie = name + "=" + (value || "") + expires + "; path=/; SameSite=Lax; secure"; 
+        }
+        
+        function getCookie(name) {
+            const nameEQ = name + "=";
+            const ca = document.cookie.split(';');
+            for(let i = 0; i < ca.length; i++) {
+                let c = ca[i];
+                while (c.charAt(0) === ' ') c = c.substring(1, c.length);
+                if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
+            }
+            return null;
+        }
+        
+        function generateUUID() {
+            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                const r = Math.random() * 16 | 0, 
+                      v = c === 'x' ? r : (r & 0x3 | 0x8);
+                return v.toString(16);
             });
         }
-    });
-    
-    // *** КОРЕКЦИЯ: Логика за "ОТКАЗ" (скрива, но НЕ записва в LS)
-    dismissButton.addEventListener('click', () => {
-        installPrompt.style.display = 'none';
-        // Прозорецът ще се появи отново при следващ рефреш, ако е налично PWA
-    });
-    
-    // ==============================================================================
-    // ФУНКЦИИ ЗА UUID
-    // ==============================================================================
-    function setCookie(name, value, days) {
-        let expires = "";
-        if (days) {
-            const date = new Date();
-            date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
-            expires = "; expires=" + date.toUTCString();
+        
+        function getOrCreateUUID() {
+            let uuid = localStorage.getItem(LS_UUID);
+            if (!uuid) {
+                uuid = getCookie(COOKIE_UUID);
+            }
+            if (!uuid) {
+                uuid = generateUUID();
+            }
+            localStorage.setItem(LS_UUID, uuid);
+            setCookie(COOKIE_UUID, uuid, 365 * 10); 
+            return uuid;
         }
-        document.cookie = name + "=" + (value || "") + expires + "; path=/; SameSite=Lax; secure"; 
-    }
-    
-    function getCookie(name) {
-        const nameEQ = name + "=";
-        const ca = document.cookie.split(';');
-        for(let i = 0; i < ca.length; i++) {
-            let c = ca[i];
-            while (c.charAt(0) === ' ') c = c.substring(1, c.length);
-            if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
+        
+        function roundMoney(amount) {
+            return Math.round((amount + Number.EPSILON) * 100) / 100;
         }
-        return null;
-    }
-    
-    function generateUUID() {
-        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-            const r = Math.random() * 16 | 0, 
-                  v = c === 'x' ? r : (r & 0x3 | 0x8);
-            return v.toString(16);
-        });
-    }
-    
-    function getOrCreateUUID() {
-        let uuid = localStorage.getItem(LS_UUID);
-        if (!uuid) {
-            uuid = getCookie(COOKIE_UUID);
+        
+        function deleteUUIDCookie() {
+            document.cookie = COOKIE_UUID + '=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; SameSite=Lax; secure';
         }
-        if (!uuid) {
-            uuid = generateUUID();
+        
+        function checkAndAutoReset() {
+            const TEN_HOURS_IN_MS = 10 * 60 * 60 * 1000; 
+            const lastResetTime = parseInt(localStorage.getItem('resto_lastResetTime') || '0', 10);
+            const currentTime = new Date().getTime();
+            const isProActive = localStorage.getItem(LS_UNLOCKED_STATUS) === 'true'; 
+        
+            if (isProActive && (currentTime - lastResetTime > TEN_HOURS_IN_MS)) {
+                document.getElementById('billEur').value = '';
+                document.getElementById('paidEur').value = '';
+                document.getElementById('paidBgn').value = '';
+                document.getElementById('resEur').innerText = '0.00';
+                document.getElementById('resBgn').innerText = '0.00';
+                document.getElementById('totalBillDisplay').innerText = '0.00';
+                document.getElementById('cashWarning').innerText = '';
+                document.querySelector('.results').style.color = "black";
+                document.getElementById('cashEur').value = '';
+                localStorage.removeItem('resto_cashEur');
+                localStorage.removeItem(LS_UUID);
+                deleteUUIDCookie(); 
+                localStorage.setItem('resto_lastResetTime', currentTime);
+                console.log("Автоматично ПЪЛНО НУЛИРАНЕ след 10 часа.");
+            }
         }
-        localStorage.setItem(LS_UUID, uuid);
-        setCookie(COOKIE_UUID, uuid, 365 * 10); 
-        return uuid;
-    }
-    
-    function roundMoney(amount) {
-        return Math.round((amount + Number.EPSILON) * 100) / 100;
-    }
-    
-    function deleteUUIDCookie() {
-        document.cookie = COOKIE_UUID + '=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; SameSite=Lax; secure';
-    }
-    
-    function checkAndAutoReset() {
-        const TEN_HOURS_IN_MS = 10 * 60 * 60 * 1000; 
-        const lastResetTime = parseInt(localStorage.getItem('resto_lastResetTime') || '0', 10);
-        const currentTime = new Date().getTime();
-        const isProActive = localStorage.getItem(LS_UNLOCKED_STATUS) === 'true'; 
-    
-        if (isProActive && (currentTime - lastResetTime > TEN_HOURS_IN_MS)) {
+        
+        // ==============================================================================
+        // ЛОГИКА ЗА ОТКЛЮЧВАНЕ И PWA ПРОМПТ
+        // ==============================================================================
+        function checkProStatus() {
+            const isUnlocked = localStorage.getItem(LS_UNLOCKED_STATUS) === 'true';
+            
+            const fullLockOverlay = document.getElementById('fullLockOverlay');
+            const lockedContent = document.getElementById('lockedContent'); 
+            
+            const uuid = getOrCreateUUID();
+            console.log("Current Device UUID:", uuid);
+        
+            
+            if (isUnlocked) {
+                fullLockOverlay.style.display = 'none';
+                lockedContent.style.opacity = '1';
+                lockedContent.style.pointerEvents = 'auto'; 
+                
+                showPermanentInstallPrompt();
+            } else {
+                fullLockOverlay.style.display = 'flex';
+                lockedContent.style.opacity = '0'; 
+                lockedContent.style.pointerEvents = 'none'; 
+            }
+        }
+        
+        function showPermanentInstallPrompt() {
+            const isInstalled = window.matchMedia('(display-mode: standalone)').matches;
+            
+            // Проверяваме дали е бил натиснат старият бутон "Скрий завинаги"
+            const isDismissedPermanently = localStorage.getItem(LS_INSTALL_DISMISSED) === 'true';
+
+            // Банерът се показва, ако PWA е налично, не е инсталирано 
+            // И не е бил натиснат старият бутон "Скрий завинаги"
+            if (deferredPrompt && !isInstalled && !isDismissedPermanently) {
+                installPrompt.style.display = 'block';
+            } else {
+                installPrompt.style.display = 'none';
+            }
+        }
+        
+        async function unlockFeature() { 
+            const unlockKey = document.getElementById('unlockKey').value.trim();
+            const userEmail = document.getElementById('userEmail').value.trim().toLowerCase(); 
+            const uuid = getOrCreateUUID();
+            
+            if (!unlockKey) {
+                alert("Моля, въведете Вашия код.");
+                return;
+            }
+        
+            // Добавяме логика за Rate Limiting Error (429)
+            document.getElementById('unlockKey').placeholder = "Проверка на кода и имейла... Моля, изчакайте.";
+            document.querySelector('.lock-content .btn-unlock-buy').disabled = true;
+        
+            try {
+                // Използваме КОРИГИРАНАТА API_ENDPOINT
+                const url = `${API_ENDPOINT}?key=${encodeURIComponent(unlockKey)}&email=${encodeURIComponent(userEmail)}&uuid=${encodeURIComponent(uuid)}`;
+                const response = await fetch(url);
+                const data = await response.json();
+        
+                if (data.status === 'success') {
+                    localStorage.setItem(LS_UNLOCKED_STATUS, 'true');
+                    localStorage.setItem('resto_lastResetTime', new Date().getTime());
+                    alert(`Успех! Приложението е отключено! ${data.message}`);
+                    showPermanentInstallPrompt(); 
+                } else {
+                    let errorMessage = data.message || "Грешка при активирането. Пробвайте отново.";
+                    
+                    if (data.httpCode === '429') {
+                        // Rate Limiting Error: 20 опита за 24 часа
+                        errorMessage = 'Твърде много неуспешни опити. Устройството е блокирано за 24 часа. Моля, опитайте отново утре.';
+                    } else if (data.message.includes('Кодът е блокиран')) {
+                        // 72-часово блокиране за смяна на устройство
+                        errorMessage = `${data.message} \n\n Ако кодът Ви е работил преди, той е временно блокиран, но Вашето устройство остава активирано. Пробвайте отново, когато изтече таймерът.`;
+                    } else {
+                        // Подобрено съобщение за легитимни потребители (Gumroad забавяне)
+                          errorMessage = `${errorMessage}. Ако току-що сте направили покупка, моля, изчакайте **30-40 секунди** и опитайте отново.`;
+                    }
+                    
+                    alert(`Грешка: ${errorMessage}`);
+                    localStorage.removeItem(LS_UNLOCKED_STATUS);
+                }
+            } catch (error) {
+                alert("Грешка при свързване със сървъра. Проверете връзката си.");
+                console.error('API Error:', error);
+            }
+            
+            document.getElementById('unlockKey').value = ''; 
+            document.getElementById('userEmail').value = ''; 
+            document.getElementById('unlockKey').placeholder = "ВЪВЕДЕТЕ ВАШИЯ КОД ТУК"; 
+            document.querySelector('.lock-content .btn-unlock-buy').disabled = false;
+            checkProStatus(); 
+        }
+        
+        // ==============================================================================
+        // ЛОГИКА ЗА RESTO
+        // ==============================================================================
+        function saveCashLimit() {
+            // NOTE: Тъй като input event listener-ът в setupDecimalInputs() вече е почистил стойността
+            // и е заменил запетаите с точки, тук просто запазваме вече чистата стойност.
+            const isUnlocked = localStorage.getItem(LS_UNLOCKED_STATUS) === 'true';
+            if (isUnlocked) {
+                localStorage.setItem('resto_cashEur', document.getElementById('cashEur').value);
+            }
+        }
+        
+        function loadCashLimits() {
+            const savedCashEur = localStorage.getItem('resto_cashEur');
+            if (savedCashEur !== null) {
+                document.getElementById('cashEur').value = savedCashEur;
+            } else {
+                document.getElementById('cashEur').value = '';
+            }
+        }
+        
+        function calculateResto() {
+            const isProActive = localStorage.getItem(LS_UNLOCKED_STATUS) === 'true';
+        
+            if (!isProActive) {
+                alert("Приложението е заключено. Моля, въведете ключ за достъп.");
+                return; 
+            }
+            
+            // Всички стойности вече са форматирани като точки от setupDecimalInputs()
+            let billEurInput = parseFloat(document.getElementById('billEur').value) || 0;
+            let paidEur = parseFloat(document.getElementById('paidEur').value) || 0;
+            let paidBgn = parseFloat(document.getElementById('paidBgn').value) || 0;
+            
+            let cashEurValue = document.getElementById('cashEur').value;
+            let cashEurAvailable = cashEurValue === '' ? Infinity : parseFloat(cashEurValue); 
+        
+            let totalBillInLeva = (billEurInput * EURO_RATE);
+            let totalPaidInLeva = (paidEur * EURO_RATE) + paidBgn;
+            let rawChangeLeva = totalPaidInLeva - totalBillInLeva;
+            
+            document.getElementById('totalBillDisplay').innerText = roundMoney(totalBillInLeva).toFixed(2);
+            document.getElementById('cashWarning').innerText = ''; 
+            document.querySelector('.results').style.color = "black";
+        
+            if (rawChangeLeva < -0.009) {
+                document.getElementById('resEur').innerText = "Недостиг!";
+                document.getElementById('resBgn').innerText = roundMoney(Math.abs(rawChangeLeva)).toFixed(2) + " лв";
+                document.querySelector('.results').style.color = "#d93025"; 
+                return;
+            }
+            if (rawChangeLeva < 0.009) {
+                document.getElementById('resEur').innerText = "0.00";
+                document.getElementById('resBgn').innerText = "0.00";
+                return;
+            }
+        
+            let totalChangeLeva = roundMoney(rawChangeLeva); 
+            let finalEurToReturn = 0;
+            let finalBgnToReturn = 0;
+            
+            let totalChangeEurDesired = roundMoney(totalChangeLeva / EURO_RATE);
+            
+            if (totalChangeEurDesired <= cashEurAvailable) {
+                finalEurToReturn = totalChangeEurDesired;
+                finalBgnToReturn = 0; 
+                
+            } else {
+                finalEurToReturn = cashEurAvailable; 
+        
+                let eurInLevaReturned = finalEurToReturn * EURO_RATE;
+                let remainingChangeInLeva = totalChangeLeva - eurInLevaReturned;
+                
+                finalBgnToReturn = roundMoney(remainingChangeInLeva);
+        
+                if (cashEurAvailable !== Infinity) {
+                    document.getElementById('cashWarning').innerText = `ВНИМАНИЕ: Недостатъчно евро. Връщаш ${finalEurToReturn.toFixed(2)}€ и остатъка (${finalBgnToReturn.toFixed(2)} лв.) в лева.`;
+                    document.querySelector('.results').style.color = "orange";
+                }
+            }
+            
+            document.getElementById('resEur').innerText = finalEurToReturn.toFixed(2);
+            document.getElementById('resBgn').innerText = finalBgnToReturn.toFixed(2);
+        }
+        
+        function resetFields() {
+            const isProActive = localStorage.getItem(LS_UNLOCKED_STATUS) === 'true';
+        
+            if (!isProActive) {
+                alert("Приложението е заключено. Моля, въведете ключ за достъп.");
+                return; 
+            }
+            
             document.getElementById('billEur').value = '';
             document.getElementById('paidEur').value = '';
             document.getElementById('paidBgn').value = '';
+            
             document.getElementById('resEur').innerText = '0.00';
             document.getElementById('resBgn').innerText = '0.00';
             document.getElementById('totalBillDisplay').innerText = '0.00';
-            document.getElementById('cashWarning').innerText = '';
+            document.getElementById('cashWarning').innerText = ''; 
             document.querySelector('.results').style.color = "black";
-            document.getElementById('cashEur').value = ''; // Нулира стойността
-            // localStorage.removeItem('resto_cashEur'); // <-- Премахната логика за премахване на LS стойност
-            localStorage.removeItem(LS_UUID);
-            deleteUUIDCookie(); 
-            localStorage.setItem('resto_lastResetTime', currentTime);
-            console.log("Автоматично ПЪЛНО НУЛИРАНЕ след 10 часа.");
-        }
-    }
-    
-    // ==============================================================================
-    // ЛОГИКА ЗА ОТКЛЮЧВАНЕ И PWA ПРОМПТ
-    // ==============================================================================
-    function checkProStatus() {
-        const isUnlocked = localStorage.getItem(LS_UNLOCKED_STATUS) === 'true';
-        
-        const fullLockOverlay = document.getElementById('fullLockOverlay');
-        const lockedContent = document.getElementById('lockedContent'); 
-        
-        const uuid = getOrCreateUUID();
-        console.log("Current Device UUID:", uuid);
-    
-        
-        if (isUnlocked) {
-            fullLockOverlay.style.display = 'none';
-            lockedContent.style.opacity = '1';
-            lockedContent.style.pointerEvents = 'auto'; 
             
-            showPermanentInstallPrompt();
-        } else {
-            fullLockOverlay.style.display = 'flex';
-            lockedContent.style.opacity = '0'; 
-            lockedContent.style.pointerEvents = 'none'; 
+            document.getElementById('cashEur').value = '';
+            localStorage.removeItem('resto_cashEur');
+            
+            localStorage.setItem('resto_lastResetTime', new Date().getTime());
         }
-    }
-    
-    function showPermanentInstallPrompt() {
-        const isInstalled = window.matchMedia('(display-mode: standalone)').matches;
-        
-        // Проверяваме дали е бил натиснат старият бутон "Скрий завинаги"
-        const isDismissedPermanently = localStorage.getItem(LS_INSTALL_DISMISSED) === 'true';
 
-        // Банерът се показва, ако PWA е налично, не е инсталирано 
-        // И не е бил натиснат старият бутон "Скрий завинаги"
-        if (deferredPrompt && !isInstalled && !isDismissedPermanently) {
-            installPrompt.style.display = 'block';
-        } else {
-            installPrompt.style.display = 'none';
-        }
-    }
-    
-    async function unlockFeature() { 
-        const unlockKey = document.getElementById('unlockKey').value.trim();
-        const userEmail = document.getElementById('userEmail').value.trim().toLowerCase(); 
-        const uuid = getOrCreateUUID();
-        
-        if (!unlockKey) {
-            alert("Моля, въведете Вашия код.");
-            return;
-        }
-    
-        // Добавяме логика за Rate Limiting Error (429)
-        document.getElementById('unlockKey').placeholder = "Проверка на кода и имейла... Моля, изчакайте.";
-        document.querySelector('.lock-content .btn-unlock-buy').disabled = true;
-    
-        try {
-            // Използваме КОРИГИРАНАТА API_ENDPOINT
-            const url = `${API_ENDPOINT}?key=${encodeURIComponent(unlockKey)}&email=${encodeURIComponent(userEmail)}&uuid=${encodeURIComponent(uuid)}`;
-            const response = await fetch(url);
-            const data = await response.json();
-    
-            if (data.status === 'success') {
-                localStorage.setItem(LS_UNLOCKED_STATUS, 'true');
-                localStorage.setItem('resto_lastResetTime', new Date().getTime());
-                alert(`Успех! Приложението е отключено! ${data.message}`);
-                showPermanentInstallPrompt(); 
-            } else {
-                let errorMessage = data.message || "Грешка при активирането. Пробвайте отново.";
-                
-                if (data.httpCode === '429') {
-                    // Rate Limiting Error: 20 опита за 24 часа
-                    errorMessage = 'Твърде много неуспешни опити. Устройството е блокирано за 24 часа. Моля, опитайте отново утре.';
-                } else if (data.message.includes('Кодът е блокиран')) {
-                    // 72-часово блокиране за смяна на устройство
-                    errorMessage = `${data.message} \n\n Ако кодът Ви е работил преди, той е временно блокиран, но Вашето устройство остава активирано. Пробвайте отново, когато изтече таймерът.`;
-                } else {
-                    // Подобрено съобщение за легитимни потребители (Gumroad забавяне)
-                      errorMessage = `${errorMessage}. Ако току-що сте направили покупка, моля, изчакайте **30-40 секунди** и опитайте отново.`;
+        // ==============================================================================
+        // НОВАТА ФУНКЦИЯ ЗА ОБРАБОТКА НА ДЕСЕТИЧНИ ЗНАЦИ
+        // ==============================================================================
+        function setupDecimalInputs() {
+            // IDs на всички входни полета, които трябва да поддържат точка и запетая
+            const ids = ['billEur', 'paidEur', 'paidBgn', 'cashEur'];
+            ids.forEach(id => {
+                const input = document.getElementById(id);
+                if (input) {
+                    // Добавяме event listener, който замества запетаите с точки веднага след въвеждане.
+                    // Това решава проблема със запетаята на iOS, когато input type е 'text'.
+                    input.addEventListener('input', function() {
+                        // 1. Позволява въвеждане само на цифри, точка и запетая (за чистота).
+                        // 2. Замества всички запетаи (,) с точки (.).
+                        this.value = this.value.replace(/[^0-9.,]/g, '').replace(/,/g, '.');
+                    });
                 }
-                
-                alert(`Грешка: ${errorMessage}`);
-                localStorage.removeItem(LS_UNLOCKED_STATUS);
-            }
-        } catch (error) {
-            alert("Грешка при свързване със сървъра. Проверете връзката си.");
-            console.error('API Error:', error);
+            });
         }
-        
-        document.getElementById('unlockKey').value = ''; 
-        document.getElementById('userEmail').value = ''; 
-        document.getElementById('unlockKey').placeholder = "ВЪВЕДЕТЕ ВАШИЯ КОД ТУК"; 
-        document.querySelector('.lock-content .btn-unlock-buy').disabled = false;
-        checkProStatus(); 
-    }
-    
-    // ==============================================================================
-    // ЛОГИКА ЗА RESTO
-    // ==============================================================================
-    
-    // *** КОРИГИРАНА ФУНКЦИЯ (НЕ ЗАПАЗВА В LS) ***
-    function saveCashLimit() {
-        // NOTE: Логиката за запазване на 'resto_cashEur' в LocalStorage е премахната
-        // по желание на потребителя. Всяка стойност ще бъде загубена при презареждане.
-        // Функцията остава празна.
-    }
-    
-    // *** КОРИГИРАНА ФУНКЦИЯ (НЕ ЗАРЕЖДА ОТ LS И НУЛИРА LS СТОЙНОСТТА) ***
-    function loadCashLimits() {
-        document.getElementById('cashEur').value = '';
-        localStorage.removeItem('resto_cashEur'); // Гарантираме, че Local Storage е чисто
-    }
-    
-    function calculateResto() {
-        const isProActive = localStorage.getItem(LS_UNLOCKED_STATUS) === 'true';
-    
-        if (!isProActive) {
-            alert("Приложението е заключено. Моля, въведете ключ за достъп.");
-            return; 
-        }
-        
-        // Всички стойности вече са форматирани като точки от setupDecimalInputs()
-        let billEurInput = parseFloat(document.getElementById('billEur').value) || 0;
-        let paidEur = parseFloat(document.getElementById('paidEur').value) || 0;
-        let paidBgn = parseFloat(document.getElementById('paidBgn').value) || 0;
-        
-        let cashEurValue = document.getElementById('cashEur').value;
-        let cashEurAvailable = cashEurValue === '' ? Infinity : parseFloat(cashEurValue); 
-    
-        let totalBillInLeva = (billEurInput * EURO_RATE);
-        let totalPaidInLeva = (paidEur * EURO_RATE) + paidBgn;
-        let rawChangeLeva = totalPaidInLeva - totalBillInLeva;
-        
-        document.getElementById('totalBillDisplay').innerText = roundMoney(totalBillInLeva).toFixed(2);
-        document.getElementById('cashWarning').innerText = ''; 
-        document.querySelector('.results').style.color = "black";
-    
-        if (rawChangeLeva < -0.009) {
-            document.getElementById('resEur').innerText = "Недостиг!";
-            document.getElementById('resBgn').innerText = roundMoney(Math.abs(rawChangeLeva)).toFixed(2) + " лв";
-            document.querySelector('.results').style.color = "#d93025"; 
-            return;
-        }
-        if (rawChangeLeva < 0.009) {
-            document.getElementById('resEur').innerText = "0.00";
-            document.getElementById('resBgn').innerText = "0.00";
-            return;
-        }
-    
-        let totalChangeLeva = roundMoney(rawChangeLeva); 
-        let finalEurToReturn = 0;
-        let finalBgnToReturn = 0;
-        
-        let totalChangeEurDesired = roundMoney(totalChangeLeva / EURO_RATE);
-        
-        if (totalChangeEurDesired <= cashEurAvailable) {
-            finalEurToReturn = totalChangeEurDesired;
-            finalBgnToReturn = 0; 
-            
-        } else {
-            finalEurToReturn = cashEurAvailable; 
-    
-            let eurInLevaReturned = finalEurToReturn * EURO_RATE;
-            let remainingChangeInLeva = totalChangeLeva - eurInLevaReturned;
-            
-            finalBgnToReturn = roundMoney(remainingChangeInLeva);
-    
-            if (cashEurAvailable !== Infinity) {
-                document.getElementById('cashWarning').innerText = `ВНИМАНИЕ: Недостатъчно евро. Връщаш ${finalEurToReturn.toFixed(2)}€ и остатъка (${finalBgnToReturn.toFixed(2)} лв.) в лева.`;
-                document.querySelector('.results').style.color = "orange";
-            }
-        }
-        
-        document.getElementById('resEur').innerText = finalEurToReturn.toFixed(2);
-        document.getElementById('resBgn').innerText = finalBgnToReturn.toFixed(2);
-    }
-    
-    function resetFields() {
-        const isProActive = localStorage.getItem(LS_UNLOCKED_STATUS) === 'true';
-    
-        if (!isProActive) {
-            alert("Приложението е заключено. Моля, въведете ключ за достъп.");
-            return; 
-        }
-        
-        document.getElementById('billEur').value = '';
-        document.getElementById('paidEur').value = '';
-        document.getElementById('paidBgn').value = '';
-        
-        document.getElementById('resEur').innerText = '0.00';
-        document.getElementById('resBgn').innerText = '0.00';
-        document.getElementById('totalBillDisplay').innerText = '0.00';
-        document.getElementById('cashWarning').innerText = ''; 
-        document.querySelector('.results').style.color = "black";
-        
-        document.getElementById('cashEur').value = '';
-        localStorage.removeItem('resto_cashEur');
-        
-        localStorage.setItem('resto_lastResetTime', new Date().getTime());
-    }
-
-    // ==============================================================================
-    // НОВАТА ФУНКЦИЯ ЗА ОБРАБОТКА НА ДЕСЕТИЧНИ ЗНАЦИ
-    // ==============================================================================
-    function setupDecimalInputs() {
-        // IDs на всички входни полета, които трябва да поддържат точка и запетая
-        const ids = ['billEur', 'paidEur', 'paidBgn', 'cashEur'];
-        ids.forEach(id => {
-            const input = document.getElementById(id);
-            if (input) {
-                // Добавяме event listener, който замества запетаите с точки веднага след въвеждане.
-                // Това решава проблема със запетаята на iOS, когато input type е 'text'.
-                input.addEventListener('input', function() {
-                    // 1. Позволява въвеждане само на цифри, точка и запетая (за чистота).
-                    // 2. Замества всички запетаи (,) с точки (.).
-                    this.value = this.value.replace(/[^0-9.,]/g, '').replace(/,/g, '.');
-                });
-            }
-        });
-    }
-</script>
+    </script>
 </body>
 </html>
