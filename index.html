@@ -124,6 +124,7 @@
         input:focus {
             border-color: #158062;
         }
+        /* Запазваме стила за премахване на стрелките, въпреки че input type вече е text */
         input::-webkit-outer-spin-button,
         input::-webkit-inner-spin-button {
             -webkit-appearance: none;
@@ -260,8 +261,7 @@
         }
     </style>
 </head>
-<body onload="checkAndAutoReset(); loadCashLimits(); checkProStatus();">
-    <div class="app-container">
+<body onload="checkAndAutoReset(); loadCashLimits(); checkProStatus(); setupDecimalInputs();"> <div class="app-container">
         
         <div class="content" id="lockedContent">
             
@@ -277,10 +277,10 @@
                 </div>
             </div>
             
-            <input type="number" id="billEur" placeholder="Сметка в евро" step="0.01" inputmode="decimal">
+            <input type="text" id="billEur" placeholder="Сметка в евро" inputmode="decimal">
 
-            <input type="number" id="paidEur" placeholder="Платено в евро" step="0.01" inputmode="decimal">
-            <input type="number" id="paidBgn" placeholder="Платено в лв" step="0.01" inputmode="decimal">
+            <input type="text" id="paidEur" placeholder="Платено в евро" inputmode="decimal">
+            <input type="text" id="paidBgn" placeholder="Платено в лв" inputmode="decimal">
 
             <button class="btn-calc" onclick="calculateResto()">ИЗЧИСЛИ РЕСТО</button>
 
@@ -295,7 +295,7 @@
                 <h3>Наличност в евро (за оптимизация)</h3>
                 
                 <label for="cashEur">Наличност в евро (€):</label>
-                <input type="number" id="cashEur" placeholder="Въведи 0, ако нямаш евро" step="0.01" inputmode="decimal" oninput="saveCashLimit()">
+                <input type="text" id="cashEur" placeholder="Въведи 0, ако нямаш евро" inputmode="decimal" oninput="saveCashLimit()">
             </div>
             
             <button class="btn-calc-pink" onclick="calculateResto()">ИЗЧИСЛИ РЕСТО</button>
@@ -572,6 +572,8 @@
         // ЛОГИКА ЗА RESTO
         // ==============================================================================
         function saveCashLimit() {
+            // NOTE: Тъй като input event listener-ът в setupDecimalInputs() вече е почистил стойността
+            // и е заменил запетаите с точки, тук просто запазваме вече чистата стойност.
             const isUnlocked = localStorage.getItem(LS_UNLOCKED_STATUS) === 'true';
             if (isUnlocked) {
                 localStorage.setItem('resto_cashEur', document.getElementById('cashEur').value);
@@ -595,6 +597,7 @@
                 return; 
             }
             
+            // Всички стойности вече са форматирани като точки от setupDecimalInputs()
             let billEurInput = parseFloat(document.getElementById('billEur').value) || 0;
             let paidEur = parseFloat(document.getElementById('paidEur').value) || 0;
             let paidBgn = parseFloat(document.getElementById('paidBgn').value) || 0;
@@ -672,6 +675,26 @@
             localStorage.removeItem('resto_cashEur');
             
             localStorage.setItem('resto_lastResetTime', new Date().getTime());
+        }
+
+        // ==============================================================================
+        // НОВАТА ФУНКЦИЯ ЗА ОБРАБОТКА НА ДЕСЕТИЧНИ ЗНАЦИ
+        // ==============================================================================
+        function setupDecimalInputs() {
+            // IDs на всички входни полета, които трябва да поддържат точка и запетая
+            const ids = ['billEur', 'paidEur', 'paidBgn', 'cashEur'];
+            ids.forEach(id => {
+                const input = document.getElementById(id);
+                if (input) {
+                    // Добавяме event listener, който замества запетаите с точки веднага след въвеждане.
+                    // Това решава проблема със запетаята на iOS, когато input type е 'text'.
+                    input.addEventListener('input', function() {
+                        // 1. Позволява въвеждане само на цифри, точка и запетая (за чистота).
+                        // 2. Замества всички запетаи (,) с точки (.).
+                        this.value = this.value.replace(/[^0-9.,]/g, '').replace(/,/g, '.');
+                    });
+                }
+            });
         }
     </script>
 </body>
